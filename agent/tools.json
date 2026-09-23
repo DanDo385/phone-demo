@@ -1,0 +1,45 @@
+{
+  "language_detection": {
+    "type": "system",
+    "name": "language_detection",
+    "params": { "system_tool_type": "language_detection" },
+    "note": "ElevenLabs system tool. The application does not implement this as its own speech-engine switch."
+  },
+  "tools": [
+    {
+      "name": "save_customer_details",
+      "description": "Save name, callback number, email, address, issue, and preferred language on the current inquiry.",
+      "required": ["inquiry_id"]
+    },
+    {
+      "name": "lookup_service_info",
+      "description": "Read one service from the price book, including assumptions and exclusions.",
+      "required": ["service_code"]
+    },
+    {
+      "name": "calculate_estimate",
+      "description": "Calculate an estimate from the price book. Inspection-only work has no firm total.",
+      "required": ["inquiry_id", "service_code"]
+    },
+    {
+      "name": "send_continuation_link",
+      "description": "Email a secure continuation link. Does not end the call.",
+      "required": ["inquiry_id", "email"]
+    },
+    {
+      "name": "check_availability",
+      "description": "List bookable windows in America/New_York.",
+      "required": ["inquiry_id", "service_code"]
+    },
+    {
+      "name": "book_appointment",
+      "description": "Recheck the slot and create the appointment. Success means the calendar accepted it.",
+      "required": ["inquiry_id", "service_code", "starts_at"]
+    },
+    {
+      "name": "request_human_followup",
+      "description": "Ask Alex Rivera to follow up. Does not dispatch a technician.",
+      "required": ["inquiry_id", "reason"]
+    }
+  ]
+}

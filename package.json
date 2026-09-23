@@ -1,0 +1,37 @@
+{
+  "name": "palmetto-coast-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fictional multilingual AI receptionist demo for Palmetto Coast Home Services.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "seed": "tsx scripts/seed.ts",
+    "setup:elevenlabs": "tsx scripts/setup-elevenlabs.ts",
+    "screenshot": "node scripts/screenshot.mjs"
+  },
+  "dependencies": {
+    "@elevenlabs/react": "^1.15.2",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
+    "next": "^15.5.26",
+    "pdf-lib": "^1.17.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "playwright": "^1.63.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

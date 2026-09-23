@@ -1,0 +1,348 @@
+import fs from "node:fs";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  id TEXT PRIMARY KEY,
+  applied_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS customers (
+  id TEXT PRIMARY KEY,
+  name TEXT,
+  phone TEXT,
+  email TEXT,
+  preferred_language TEXT NOT NULL DEFAULT 'en',
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inquiries (
+  id TEXT PRIMARY KEY,
+  customer_id TEXT,
+  status TEXT NOT NULL,
+  preferred_language TEXT NOT NULL,
+  language_lock TEXT,
+  language_asked INTEGER NOT NULL DEFAULT 0,
+  issue TEXT,
+  service_code TEXT,
+  service_address TEXT,
+  in_service_area INTEGER,
+  facts_json TEXT NOT NULL,
+  followup_requested INTEGER NOT NULL DEFAULT 0,
+  followup_note TEXT,
+  calendar_revealed INTEGER NOT NULL DEFAULT 0,
+  origin TEXT NOT NULL,
+  recording_enabled INTEGER NOT NULL DEFAULT 0,
+  voice_id TEXT,
+  replay_json TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  provider_conversation_id TEXT,
+  call_sid TEXT,
+  language TEXT NOT NULL,
+  status TEXT NOT NULL,
+  source_kind TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  ended_at TEXT
+);
+CREATE TABLE IF NOT EXISTS transcript_turns (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  speaker TEXT NOT NULL,
+  text TEXT NOT NULL,
+  language TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  source_kind TEXT NOT NULL,
+  ordinal INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS translations (
+  id TEXT PRIMARY KEY,
+  turn_id TEXT NOT NULL,
+  language TEXT NOT NULL,
+  text TEXT,
+  status TEXT NOT NULL,
+  source TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS language_events (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  session_id TEXT,
+  from_language TEXT,
+  to_language TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  source_kind TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tool_executions (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  session_id TEXT,
+  name TEXT NOT NULL,
+  args_json TEXT NOT NULL,
+  args_redacted_json TEXT NOT NULL,
+  result_json TEXT,
+  error TEXT,
+  status TEXT NOT NULL,
+  idempotency_key TEXT,
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  duration_ms INTEGER,
+  source_kind TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS tool_idem ON tool_executions(inquiry_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE TABLE IF NOT EXISTS timeline_events (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  detail TEXT,
+  source_kind TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  data_json TEXT
+);
+CREATE TABLE IF NOT EXISTS appointments (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  technician_id TEXT NOT NULL,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL,
+  status TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  address TEXT NOT NULL,
+  language TEXT NOT NULL,
+  issue TEXT,
+  customer_name TEXT,
+  customer_phone TEXT,
+  customer_email TEXT,
+  source_kind TEXT NOT NULL,
+  google_event_id TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS appt_slot ON appointments(technician_id, starts_at) WHERE status = 'booked';
+CREATE TABLE IF NOT EXISTS emails (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  to_address TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  text_body TEXT NOT NULL,
+  html_body TEXT NOT NULL,
+  language TEXT NOT NULL,
+  status TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  provider_message_id TEXT,
+  provider_thread_id TEXT,
+  error TEXT,
+  created_at TEXT NOT NULL,
+  idempotency_key TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS email_idem ON emails(inquiry_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE TABLE IF NOT EXISTS attachments (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  size_bytes INTEGER NOT NULL,
+  storage_path TEXT NOT NULL,
+  caption TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  source_kind TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS invoices (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL UNIQUE,
+  number TEXT NOT NULL UNIQUE,
+  language TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  subtotal_cents INTEGER NOT NULL,
+  tax_cents INTEGER NOT NULL,
+  total_cents INTEGER NOT NULL,
+  tax_note TEXT NOT NULL,
+  demo_banner TEXT NOT NULL,
+  status TEXT NOT NULL,
+  pdf_path TEXT,
+  created_at TEXT NOT NULL,
+  approved_by TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS invoice_lines (
+  id TEXT PRIMARY KEY,
+  invoice_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  description_en TEXT NOT NULL,
+  description_es TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  position INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS review_invitations (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL UNIQUE,
+  language TEXT NOT NULL,
+  status TEXT NOT NULL,
+  email_id TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS review_events (
+  id TEXT PRIMARY KEY,
+  invitation_id TEXT NOT NULL,
+  inquiry_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  destination TEXT,
+  note TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS review_submissions (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  rating INTEGER,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS scheduled_jobs (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT,
+  kind TEXT NOT NULL,
+  run_at TEXT NOT NULL,
+  status TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  idempotency_key TEXT UNIQUE,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  locked_at TEXT,
+  last_error TEXT,
+  created_at TEXT NOT NULL,
+  finished_at TEXT
+);
+CREATE TABLE IF NOT EXISTS access_tokens (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  purpose TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  revoked_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS webhook_receipts (
+  id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  received_at TEXT NOT NULL,
+  UNIQUE(provider, event_id)
+);
+CREATE TABLE IF NOT EXISTS owner_users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS owner_sessions (
+  id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS provider_refs (
+  id TEXT PRIMARY KEY,
+  inquiry_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  external_id TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS calls (
+  call_sid TEXT PRIMARY KEY,
+  inquiry_id TEXT,
+  from_number TEXT,
+  to_number TEXT,
+  status TEXT NOT NULL,
+  forwarded INTEGER NOT NULL DEFAULT 0,
+  dial_status TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+`;
+
+type Sql = DatabaseSync;
+
+let singleton: Sql | null = null;
+let singletonPath: string | null = null;
+
+export function databasePath(): string {
+  if (process.env.DATABASE_PATH) return process.env.DATABASE_PATH;
+  return path.join(process.cwd(), "data", "palmetto.sqlite");
+}
+
+export function getDb(): Sql {
+  const target = databasePath();
+  if (singleton && singletonPath === target) return singleton;
+  if (singleton) {
+    singleton.close();
+    singleton = null;
+  }
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  const db = new DatabaseSync(target);
+  db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
+  db.exec(SCHEMA);
+  singleton = db;
+  singletonPath = target;
+  return db;
+}
+
+export function resetDbForTests(target?: string): Sql {
+  if (singleton) {
+    singleton.close();
+    singleton = null;
+    singletonPath = null;
+  }
+  if (target) process.env.DATABASE_PATH = target;
+  return getDb();
+}
+
+export function closeDb(): void {
+  if (singleton) singleton.close();
+  singleton = null;
+  singletonPath = null;
+}
+
+export type Row = Record<string, unknown>;
+
+export function all<T extends Row = Row>(sql: string, ...params: Array<string | number | null | Uint8Array>): T[] {
+  return getDb().prepare(sql).all(...params) as T[];
+}
+
+export function get<T extends Row = Row>(sql: string, ...params: Array<string | number | null | Uint8Array>): T | undefined {
+  return getDb().prepare(sql).get(...params) as T | undefined;
+}
+
+export function run(sql: string, ...params: Array<string | number | null | Uint8Array>): void {
+  getDb().prepare(sql).run(...params);
+}
+
+export function transaction<T>(fn: () => T): T {
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const value = fn();
+    db.exec("COMMIT");
+    return value;
+  } catch (error) {
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      /* already closed */
+    }
+    throw error;
+  }
+}
