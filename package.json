@@ -11,7 +11,8 @@
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
     "setup:elevenlabs": "tsx scripts/setup-elevenlabs.ts",
-    "screenshot": "node scripts/screenshot.mjs"
+    "screenshot": "node scripts/screenshot.mjs",
+    "setup:google": "tsx scripts/setup-google.ts"
   },
   "dependencies": {
     "@elevenlabs/react": "^1.15.2",
