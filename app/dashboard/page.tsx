@@ -17,7 +17,7 @@ export default async function DashboardHome() {
           <div className="kicker">Fictional demo</div>
           <div className="wordmark" style={{ fontSize: 32 }}>Owner dashboard</div>
         </div>
-        <Link href="/call">Open phone experience</Link>
+        <span><Link href="/dashboard/crm">Customers</Link> · <Link href="/dashboard/books">Books</Link> · <Link href="/call">Open phone experience</Link></span>
       </header>
       <section className="panel" style={{ marginTop: 16 }}>
         <h2>Run the receptionist scenario</h2>

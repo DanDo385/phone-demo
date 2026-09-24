@@ -18,6 +18,7 @@ import {
   startTool,
 } from "./records";
 import { get, run, transaction } from "./db";
+import { reviewCustomer, reviewInquiry } from "./scoring";
 import type { SourceKind, ToolCall, ToolResult } from "./types";
 
 export async function executeTool(input: {
@@ -67,8 +68,12 @@ async function perform(input: {
   const inquiry = inquiryById(input.inquiryId);
   if (!inquiry) return { name: input.call.name, ok: false, error: "Inquiry not found", code: "not_found" };
   switch (input.call.name) {
-    case "save_customer_details":
-      return saveDetails(input.inquiryId, args, input.sourceKind);
+    case "save_customer_details": {
+      const saved = saveDetails(input.inquiryId, args, input.sourceKind);
+      if (inquiry.customer_id) await reviewCustomer(inquiry.customer_id);
+      await reviewInquiry(input.inquiryId);
+      return saved;
+    }
     case "lookup_service_info":
       return lookup(String(args.topic ?? args.service_code ?? ""));
     case "calculate_estimate":

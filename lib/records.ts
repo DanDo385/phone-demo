@@ -1,6 +1,7 @@
 import { all, get, run, transaction } from "./db";
 import { id, sha256, token } from "./ids";
 import { redactJson } from "./redact";
+import { syncCustomer } from "./scoring";
 import type { DialogueState, Facts, Lang, SourceKind } from "./types";
 
 export type InquiryRow = {
@@ -87,6 +88,7 @@ export function saveState(inquiryId: string, state: DialogueState): void {
       state.language,
       row.customer_id,
     );
+    syncCustomer(row.customer_id);
   }
 }
 
