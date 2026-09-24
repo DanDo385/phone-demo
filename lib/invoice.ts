@@ -6,6 +6,8 @@ import { invoiceDraft, reviewDraft } from "./copy";
 import { get, run } from "./db";
 import { invoiceLinesForApproved } from "./estimate";
 import { id } from "./ids";
+import { postInvoice } from "./ledger";
+import { reviewJournal, syncCustomer } from "./scoring";
 import { formatMoney } from "./money";
 import { deliverEmail } from "./providers/agentmail";
 import { addTimeline, demoNow, inquiryById, issueToken, nowIso } from "./records";
@@ -21,7 +23,11 @@ export async function completeDemoService(input: {
   const inquiry = inquiryById(input.inquiryId);
   if (!inquiry) return { ok: false, error: "Inquiry not found" };
   const existing = get<{ id: string; number: string }>("SELECT id, number FROM invoices WHERE inquiry_id = ?", input.inquiryId);
-  if (existing) return { ok: true, invoiceId: existing.id, number: existing.number };
+  if (existing) {
+    const posted = postInvoice(existing.id);
+    await reviewJournal(posted.journalId);
+    return { ok: true, invoiceId: existing.id, number: existing.number };
+  }
   const facts = JSON.parse(inquiry.facts_json) as { serviceCode?: string; email?: string; name?: string };
   const code = facts.serviceCode || inquiry.service_code || "DIAG";
   const service = serviceByCode(code);
@@ -82,6 +88,12 @@ export async function completeDemoService(input: {
       index,
     );
   });
+  if (inquiry.customer_id) {
+    syncCustomer(inquiry.customer_id);
+    run("UPDATE crm_profiles SET status = 'active', updated_at = ? WHERE customer_id = ?", nowIso(), inquiry.customer_id);
+  }
+  const posted = postInvoice(invoiceId);
+  await reviewJournal(posted.journalId);
   addTimeline({
     inquiryId: input.inquiryId,
     kind: "invoice_created",

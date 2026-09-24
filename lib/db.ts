@@ -272,6 +272,66 @@ CREATE TABLE IF NOT EXISTS calls (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS crm_profiles (
+  customer_id TEXT PRIMARY KEY,
+  status TEXT NOT NULL DEFAULT 'lead',
+  address TEXT,
+  source TEXT,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS crm_notes (
+  id TEXT PRIMARY KEY,
+  customer_id TEXT NOT NULL,
+  author TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS accounts (
+  code TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  normal TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS journals (
+  id TEXT PRIMARY KEY,
+  source_type TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  invoice_id TEXT,
+  memo TEXT NOT NULL,
+  posted_at TEXT NOT NULL,
+  posted_by TEXT NOT NULL,
+  UNIQUE(source_type, source_id)
+);
+CREATE TABLE IF NOT EXISTS journal_lines (
+  id TEXT PRIMARY KEY,
+  journal_id TEXT NOT NULL,
+  account_code TEXT NOT NULL,
+  debit_cents INTEGER NOT NULL,
+  credit_cents INTEGER NOT NULL,
+  memo TEXT NOT NULL,
+  position INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS reviews (
+  id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL,
+  subject_id TEXT NOT NULL,
+  question TEXT NOT NULL,
+  answer_json TEXT NOT NULL,
+  degraded INTEGER NOT NULL,
+  model TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS flags (
+  id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL,
+  subject_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  detail TEXT NOT NULL,
+  review_id TEXT,
+  created_at TEXT NOT NULL,
+  resolved_at TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS flags_open ON flags(subject_type, subject_id, kind) WHERE resolved_at IS NULL;
 `;
 
 type Sql = DatabaseSync;
