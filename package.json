@@ -12,16 +12,19 @@
     "seed": "tsx scripts/seed.ts",
     "setup:elevenlabs": "tsx scripts/setup-elevenlabs.ts",
     "screenshot": "node scripts/screenshot.mjs",
-    "setup:google": "tsx scripts/setup-google.ts"
+    "setup:google": "tsx scripts/setup-google.ts",
+    "setup:prospect-agent": "tsx scripts/setup-prospect-agent.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "@elevenlabs/react": "^1.15.2",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "next": "^15.5.26",
     "pdf-lib": "^1.17.1",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

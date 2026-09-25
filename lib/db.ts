@@ -332,6 +332,65 @@ CREATE TABLE IF NOT EXISTS flags (
   resolved_at TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS flags_open ON flags(subject_type, subject_id, kind) WHERE resolved_at IS NULL;
+CREATE TABLE IF NOT EXISTS prospects (
+  id TEXT PRIMARY KEY,
+  status TEXT NOT NULL,
+  stage TEXT,
+  website TEXT NOT NULL,
+  gbp_input TEXT,
+  email TEXT NOT NULL,
+  phone_e164 TEXT,
+  client_ip TEXT,
+  sources_json TEXT,
+  analysis_json TEXT,
+  error TEXT,
+  report_email_status TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS prospects_phone ON prospects(phone_e164, created_at);
+CREATE TABLE IF NOT EXISTS prospect_calls (
+  id TEXT PRIMARY KEY,
+  prospect_id TEXT NOT NULL,
+  conversation_id TEXT UNIQUE,
+  call_sid TEXT,
+  channel TEXT NOT NULL,
+  status TEXT NOT NULL,
+  summary TEXT,
+  email_status TEXT,
+  started_at TEXT NOT NULL,
+  last_activity_at TEXT NOT NULL,
+  ended_at TEXT
+);
+CREATE INDEX IF NOT EXISTS prospect_calls_prospect ON prospect_calls(prospect_id, started_at);
+CREATE TABLE IF NOT EXISTS prospect_lines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  call_id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  speaker TEXT NOT NULL,
+  text TEXT NOT NULL,
+  at_secs REAL,
+  created_at TEXT NOT NULL,
+  UNIQUE(call_id, seq)
+);
+CREATE TABLE IF NOT EXISTS prospect_bookings (
+  id TEXT PRIMARY KEY,
+  prospect_id TEXT NOT NULL,
+  call_id TEXT,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL,
+  service TEXT NOT NULL,
+  customer_name TEXT,
+  customer_phone TEXT,
+  notes TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS relay_turns (
+  tool_use_id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  content_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 `;
 
 type Sql = DatabaseSync;
@@ -342,6 +401,12 @@ let singletonPath: string | null = null;
 export function databasePath(): string {
   if (process.env.DATABASE_PATH) return process.env.DATABASE_PATH;
   return path.join(process.cwd(), "data", "palmetto.sqlite");
+}
+
+// CREATE TABLE IF NOT EXISTS leaves existing tables alone; add columns introduced later.
+function addMissingColumns(db: Sql): void {
+  const cols = (db.prepare("PRAGMA table_info(prospect_lines)").all() as Array<{ name: string }>).map((c) => c.name);
+  if (!cols.includes("at_secs")) db.exec("ALTER TABLE prospect_lines ADD COLUMN at_secs REAL");
 }
 
 export function getDb(): Sql {
@@ -355,6 +420,7 @@ export function getDb(): Sql {
   const db = new DatabaseSync(target);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);
+  addMissingColumns(db);
   singleton = db;
   singletonPath = target;
   return db;

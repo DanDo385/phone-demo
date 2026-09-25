@@ -2,6 +2,8 @@ import { get, run } from "./db";
 import { registerTwilioCall } from "./providers/elevenlabs";
 import { addTimeline, createInquiry, nowIso } from "./records";
 import { initialState } from "./dialogue";
+import { sameNumber, toE164 } from "./phone";
+import { analysisOf, openCall, prospectForCaller } from "./prospect/store";
 
 function xml(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[ch] ?? ch);
@@ -17,9 +19,10 @@ export async function handleInbound(params: Record<string, string>): Promise<str
   const to = params.To || "";
   const existing = get<{ forwarded: number; status: string }>("SELECT forwarded, status FROM calls WHERE call_sid = ?", callSid);
   if (existing?.forwarded) return twimlMessage("This call was already forwarded.");
-  if (from && process.env.TWILIO_PHONE_NUMBER && from === process.env.TWILIO_PHONE_NUMBER) {
+  if (sameNumber(from, process.env.TWILIO_PHONE_NUMBER)) {
     return twimlMessage("Forwarding loop prevented.");
   }
+  if (process.env.ELEVENLABS_PROSPECT_AGENT_ID) return connectProspect(callSid, from, to);
   const stamp = nowIso();
   if (!existing) {
     run(
@@ -31,7 +34,7 @@ export async function handleInbound(params: Record<string, string>): Promise<str
       stamp,
     );
   }
-  const owner = process.env.OWNER_FORWARD_NUMBER;
+  const owner = toE164(process.env.OWNER_FORWARD_NUMBER);
   if (!owner) return connectAgent(callSid, from, to, "direct");
   const action = `${process.env.APP_BASE_URL || ""}/api/webhooks/twilio/dial-result`;
   return `<?xml version="1.0" encoding="UTF-8"?><Response><Dial timeout="12" action="${xml(action)}" method="POST" answerOnBridge="true"><Number>${xml(owner)}</Number></Dial></Response>`;
@@ -85,5 +88,24 @@ async function connectAgent(callSid: string, from: string, to: string, dialStatu
     addTimeline({ inquiryId: created.inquiryId, kind: "forward_failed", title: "AI connection failed", detail: registered.error, sourceKind: "live" });
     return twimlMessage("The AI receptionist is not connected right now. Please call back during business hours.");
   }
+  return registered.twiml;
+}
+
+// Prospect demo line: answer as the business the caller built a demo for.
+async function connectProspect(callSid: string, from: string, to: string): Promise<string> {
+  const prospect = prospectForCaller(toE164(from));
+  const analysis = analysisOf(prospect);
+  if (!prospect || !analysis) {
+    return twimlMessage("Thanks for calling the AI receptionist demo. To hear it answer as your business, enter your website on the demo page first, then call back.");
+  }
+  // Twilio retries webhooks; one call row per CallSid.
+  if (!get("SELECT id FROM prospect_calls WHERE call_sid = ?", callSid)) openCall({ prospectId: prospect.id, channel: "phone", callSid });
+  const registered = await registerTwilioCall({
+    from,
+    to,
+    agentId: process.env.ELEVENLABS_PROSPECT_AGENT_ID,
+    dynamicVariables: { prospect_id: prospect.id, business_name: analysis.business.name, first_message: analysis.voice.first_message },
+  });
+  if (!registered.ok) return twimlMessage("The demo receptionist is not available right now. Please try again in a minute.");
   return registered.twiml;
 }

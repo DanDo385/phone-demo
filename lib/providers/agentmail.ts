@@ -1,4 +1,4 @@
-import { mailConfigured } from "./status";
+import { agentMailReady, mailConfigured } from "./status";
 
 export type Delivery = {
   status: "simulated" | "sent" | "failed";
@@ -32,6 +32,14 @@ export async function deliverEmail(input: {
       error: "Recipient is not the designated test address. The message was not sent.",
     };
   }
+  return sendAgentMail({ to: input.to, subject: input.subject, text: input.text, html: input.html, labels: ["palmetto-demo"] });
+}
+
+// Raw AgentMail send. Callers decide who may receive mail; this only delivers.
+export async function sendAgentMail(input: { to: string; subject: string; text: string; html: string; labels: string[] }): Promise<Delivery> {
+  if (!agentMailReady() || !process.env.AGENTMAIL_API_KEY || !process.env.AGENTMAIL_INBOX_ID) {
+    return { status: "failed", provider: "agentmail", error: "AgentMail is not configured. The message was not sent." };
+  }
   try {
     const response = await fetch(
       `https://api.agentmail.to/v0/inboxes/${encodeURIComponent(process.env.AGENTMAIL_INBOX_ID)}/messages/send`,
@@ -46,7 +54,7 @@ export async function deliverEmail(input: {
           subject: input.subject,
           text: input.text,
           html: input.html,
-          labels: ["palmetto-demo"],
+          labels: input.labels,
         }),
       },
     );
