@@ -1,9 +1,12 @@
 // One-time Google Calendar authorization. Mints a refresh token and stores it in 1Password.
 //
-//   op run --env-file=.env.op -- npm run setup:google
+//   project-env npm run setup:google
 //
-// Sign in as the calendar owner (dan@magro.dev). The token is written to the
-// refresh_token field of GOOGLE_OP_ITEM and is never printed.
+// Sign in as the calendar owner (dan@magro.dev). The token is written to the canonical
+// "Google | dan@magro.dev" item (section oauth_phone_demo) and is never printed.
+// The phone-demo-dev Environment keeps its own copy: paste the new value into
+// GOOGLE_REFRESH_TOKEN there (1Password > Developer > Environments), then run
+// envsync.py --check to confirm no drift.
 import crypto from "node:crypto";
 import http from "node:http";
 import { execFileSync, spawn } from "node:child_process";
@@ -12,7 +15,7 @@ const PORT = Number(process.env.GOOGLE_AUTH_PORT || 53682);
 const REDIRECT_URI = `http://127.0.0.1:${PORT}/callback`;
 const LOGIN_HINT = process.env.GOOGLE_LOGIN_HINT || "dan@magro.dev";
 const OP_VAULT = process.env.GOOGLE_OP_VAULT || "Dev";
-const OP_ITEM = process.env.GOOGLE_OP_ITEM || "o52saizwfwcbyf6ejbz7gsbe7u";
+const OP_ITEM = process.env.GOOGLE_OP_ITEM || "jkdm7r24acc7lhcxic2wv3s6he"; // "Google | dan@magro.dev"
 // FreeBusy, then insert, is all lib/providers/google.ts does.
 const SCOPES = ["https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.freebusy"];
 
@@ -26,7 +29,7 @@ function fail(message: string): never {
 }
 
 if (!clientId || !clientSecret || !calendarId) {
-  fail("GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_ID are required. Run with: op run --env-file=.env.op -- npm run setup:google");
+  fail("GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_ID are required. Run with: project-env npm run setup:google");
 }
 
 const verifier = crypto.randomBytes(32).toString("base64url");
@@ -116,10 +119,10 @@ async function verify(accessToken: string) {
 }
 
 function save(refreshToken: string) {
-  execFileSync("op", ["item", "edit", OP_ITEM, "--vault", OP_VAULT, `refresh_token[password]=${refreshToken}`], {
+  execFileSync("op", ["item", "edit", OP_ITEM, "--vault", OP_VAULT, `oauth_phone_demo.refresh_token[password]=${refreshToken}`], {
     stdio: ["ignore", "ignore", "inherit"],
   });
-  console.log(`Saved refresh_token to 1Password (${OP_VAULT} / ${OP_ITEM}).`);
+  console.log(`Saved refresh_token to 1Password (${OP_VAULT} / ${OP_ITEM} / oauth_phone_demo). Also update GOOGLE_REFRESH_TOKEN in the phone-demo-dev Environment.`);
 }
 
 async function main() {
@@ -141,7 +144,7 @@ async function main() {
         "Set it to Internal (Google Auth Platform > Audience) and run this again for a token that does not expire.",
     );
   }
-  console.log("\nDone. Restart with: op run --env-file=.env.op -- npm run dev");
+  console.log("\nDone. Restart with: npm run dev (the mounted .env) or project-env npm run dev");
 }
 
 main();

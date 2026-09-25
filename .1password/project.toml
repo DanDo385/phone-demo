@@ -1,0 +1,54 @@
+# 1Password routing for this repo. Safe to commit: contains no secret values.
+# Agents: use THIS Environment. Do not search the vault for Google/Twilio/etc. credentials.
+project = "phone-demo"
+environment_name = "phone-demo-dev"
+environment_id = "szxivkvhfzaeo7veqmtj2fkzyu"
+account = "my.1password.com"
+vault = "Dev"
+run = "npm run dev"
+
+google_account = "dan@magro.dev"
+google_cloud_project_number = "675437678581"
+providers = ["google", "twilio", "elevenlabs", "agentmail", "typesafe", "anthropic", "firecrawl"]
+
+# Runtime variable -> source. op:// refs point at canonical provider items and double as the
+# rotation map; plain strings are non-secret literals. Sync with:
+#   ~/.claude/skills/1password-vault-architect/scripts/envsync.py ~/Code/phone-demo
+# Names follow what this app's code reads (GOOGLE_CLIENT_ID, not GOOGLE_OAUTH_CLIENT_ID).
+[variables]
+PROJECT_NAME = "phone-demo"
+APP_ENV = "development"
+APP_BASE_URL = "https://phone-demo.magro.dev"
+GOOGLE_ACCOUNT_EMAIL = "dan@magro.dev"
+ELEVENLABS_ALLOW_AGENT_CREATE = "false"
+ELEVENLABS_ALLOW_AGENT_UPDATE = "false"
+TWILIO_ALLOW_UNSIGNED = "false"
+RECORD_CALLS = "false"
+
+JEV_API_KEY = "op://Dev/7xs4ck6u2lngsck2qm5skfj22i/credential"                  # TypeSafe (Jev API Key)
+DEMO_OWNER_PASSWORD = "op://Dev/mpajocrxmn7asznj46gzac4piu/owner_password"                               # Phone Demo
+DEMO_SESSION_SECRET = "op://Dev/mpajocrxmn7asznj46gzac4piu/session_secret"
+TOOL_WEBHOOK_SECRET = "op://Dev/mpajocrxmn7asznj46gzac4piu/tool_webhook_secret"
+TEST_CUSTOMER_EMAIL = "op://Dev/mpajocrxmn7asznj46gzac4piu/test_customer_email"
+TEST_CUSTOMER_PHONE = "op://Dev/mpajocrxmn7asznj46gzac4piu/test_customer_phone"
+ELEVENLABS_API_KEY = "op://Dev/lepwetmvclv3h6qamwbxdzwm6u/credential"                                    # ElevenLabs API Key
+ELEVENLABS_AGENT_ID = "op://Dev/lepwetmvclv3h6qamwbxdzwm6u/agent_id"
+ELEVENLABS_WEBHOOK_SECRET = "op://Dev/lepwetmvclv3h6qamwbxdzwm6u/webhook_secret"
+TWILIO_ACCOUNT_SID = "op://Dev/34qdarkx6vqwd3v4pkwr2sfldy/account/account_sid"                           # Twilio
+TWILIO_AUTH_TOKEN = "op://Dev/34qdarkx6vqwd3v4pkwr2sfldy/account/auth_token"
+TWILIO_API_KEY_SID = "op://Dev/34qdarkx6vqwd3v4pkwr2sfldy/api_key/api_key"
+TWILIO_API_KEY_SECRET = "op://Dev/34qdarkx6vqwd3v4pkwr2sfldy/api_key/api_key_secret"
+TWILIO_PHONE_NUMBER = "op://Dev/34qdarkx6vqwd3v4pkwr2sfldy/phone/phone_number"
+OWNER_FORWARD_NUMBER = "op://Dev/34qdarkx6vqwd3v4pkwr2sfldy/phone/forward_number"
+AGENTMAIL_API_KEY = "op://Dev/52kln6jt3oxxxr4szj2o6y2e6m/credential"                                     # AgentMail API Key
+AGENTMAIL_INBOX_ID = "op://Dev/52kln6jt3oxxxr4szj2o6y2e6m/inbox_id"
+AGENTMAIL_WEBHOOK_SECRET = "op://Dev/52kln6jt3oxxxr4szj2o6y2e6m/webhook_secret"
+GOOGLE_CLIENT_ID = "op://Dev/jkdm7r24acc7lhcxic2wv3s6he/oauth_phone_demo/client_id"                       # Google | dan@magro.dev
+GOOGLE_CLIENT_SECRET = "op://Dev/jkdm7r24acc7lhcxic2wv3s6he/oauth_phone_demo/client_secret"
+GOOGLE_REFRESH_TOKEN = "op://Dev/jkdm7r24acc7lhcxic2wv3s6he/oauth_phone_demo/refresh_token"
+GOOGLE_CALENDAR_ID = "op://Dev/jkdm7r24acc7lhcxic2wv3s6he/oauth_phone_demo/calendar_id"
+ANTHROPIC_API_KEY = "op://Dev/e6vnwwousfa35l32gdwindqjke/credential"                                     # Anthropic (prospect analysis, custom LLM relay)
+FIRECRAWL_API_KEY = "op://Dev/5klovwgfhj3me2g5tup4wt2paa/api/api_key"                                     # Firecrawl (prospect website scrape)
+GOOGLE_MAPS_API_KEY = "op://Dev/wjmucxeh3nbzdq7uncigpzdfnu/api_key_maps/api_key"                           # Google | djm385@gmail.com (Places API New)
+LLM_RELAY_SECRET = "op://Dev/mpajocrxmn7asznj46gzac4piu/llm_relay_secret"                             # Phone Demo (ElevenLabs custom LLM -> /api/llm)
+ELEVENLABS_PROSPECT_AGENT_ID = "op://Dev/lepwetmvclv3h6qamwbxdzwm6u/prospect_agent_id"                  # ElevenLabs (prospect demo agent, custom LLM)
