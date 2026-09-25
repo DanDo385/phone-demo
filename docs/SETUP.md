@@ -122,3 +122,10 @@ demo number is shown only after Twilio confirms the account owns `TWILIO_PHONE_N
 project-env npm run setup:prospect-agent            # dry run
 project-env npm run setup:prospect-agent -- --apply # create or update (requires public APP_BASE_URL)
 ```
+
+## Self-hosted voice (prototype)
+
+`voice/` is a Pipecat service that can answer prospect phone calls instead of ElevenLabs,
+using open-weight speech models (Parakeet, Kokoro) and the same relay. Set
+`PROSPECT_VOICE_ENGINE=selfhosted` and `VOICE_STREAM_URL` to switch. Architecture, setup,
+test harness and measured latency are in `voice/README.md`.
