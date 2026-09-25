@@ -13,6 +13,7 @@ export type JevAnswer = {
 type Ask = (
   state: unknown,
   questions: Record<string, unknown>,
+  timeoutMs?: number,
 ) => Promise<{ model: string; answers: Record<string, JevAnswer> }>;
 
 let ask: Ask = askJev;
@@ -21,9 +22,18 @@ export function setAskForTests(next: Ask | null): void {
   ask = next ?? askJev;
 }
 
+export function evaluateJev(
+  state: unknown,
+  questions: Record<string, unknown>,
+  timeoutMs?: number,
+): Promise<{ model: string; answers: Record<string, JevAnswer> }> {
+  return ask(state, questions, timeoutMs);
+}
+
 export async function askJev(
   state: unknown,
   questions: Record<string, unknown>,
+  timeoutMs = 8000,
 ): Promise<{ model: string; answers: Record<string, JevAnswer> }> {
   const key = process.env.JEV_API_KEY;
   if (!key || process.env.VITEST) throw new Error("no_key");
@@ -31,7 +41,7 @@ export async function askJev(
     method: "POST",
     headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
     body: JSON.stringify({ state, model: process.env.JEV_MODEL || "jev-latest", questions }),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) throw new Error(`jev_${response.status}`);
   const body = (await response.json()) as { model?: string; answers?: Record<string, JevAnswer> };

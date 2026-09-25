@@ -19,14 +19,14 @@ export async function completeDemoService(input: {
   ownerName: string;
   delivery: "simulated" | "connected";
   sourceKind: SourceKind;
-}): Promise<{ ok: true; invoiceId: string; number: string } | { ok: false; error: string }> {
+}): Promise<{ ok: true; invoiceId: string; number: string; already?: boolean } | { ok: false; error: string }> {
   const inquiry = inquiryById(input.inquiryId);
   if (!inquiry) return { ok: false, error: "Inquiry not found" };
   const existing = get<{ id: string; number: string }>("SELECT id, number FROM invoices WHERE inquiry_id = ?", input.inquiryId);
   if (existing) {
     const posted = postInvoice(existing.id);
     await reviewJournal(posted.journalId);
-    return { ok: true, invoiceId: existing.id, number: existing.number };
+    return { ok: true, invoiceId: existing.id, number: existing.number, already: true as const };
   }
   const facts = JSON.parse(inquiry.facts_json) as { serviceCode?: string; email?: string; name?: string };
   const code = facts.serviceCode || inquiry.service_code || "DIAG";

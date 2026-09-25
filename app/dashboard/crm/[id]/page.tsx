@@ -23,7 +23,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       </header>
       <section className="panel" style={{ marginTop: 16 }}>
         <p>{customer.phone || "no phone"} · {customer.email || "no email"}</p>
-        <p className="muted">{customer.status || "lead"} · {customer.address || "no address"}</p>
+        <p className="muted">Profile record: {customer.status || "lead"}. This is not the six-stage journey. {customer.address || "No address on the profile."}</p>
         {detail.flags.map((flag) => (
           <p key={String(flag.id)} className="demo-flag">{String(flag.kind)}: {String(flag.detail)}</p>
         ))}

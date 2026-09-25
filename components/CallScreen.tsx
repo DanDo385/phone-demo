@@ -115,6 +115,7 @@ export function CallScreen({ elevenlabs }: { elevenlabs: boolean }) {
         ))}
       </div>
       <p className="muted">Voice previews use this device’s speech. They are not an ElevenLabs sample unless a connected session is running.</p>
+      <p className="muted">Separate from the dashboard replay. The missed-call story is English call on the owner dashboard.</p>
       <div className="actions" style={{ margin: "12px 0" }}>
         <button className="btn" disabled={busy} onClick={() => start("simulated")}>Start simulated browser voice</button>
         <button className="btn-secondary" disabled={!elevenlabs || busy} onClick={() => start("elevenlabs")}>Start ElevenLabs browser voice</button>
@@ -130,7 +131,7 @@ export function CallScreen({ elevenlabs }: { elevenlabs: boolean }) {
         <input value={text} onChange={(event) => setText(event.target.value)} placeholder="Type if the microphone is unavailable" style={{ flex: 1, borderRadius: 999, border: "1px solid var(--line)", padding: "10px 14px" }} />
         <button className="btn" disabled={!inquiryId} onClick={() => send()}>Send</button>
       </div>
-      {inquiryId && <p className="muted">Dashboard inquiry {inquiryId}</p>}
+      {inquiryId && <p className="muted"><a href={`/dashboard/inquiries/${inquiryId}`}>Show this browser session on the dashboard</a></p>}
     </div>
   );
 }

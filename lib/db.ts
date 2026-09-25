@@ -332,6 +332,19 @@ CREATE TABLE IF NOT EXISTS flags (
   resolved_at TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS flags_open ON flags(subject_type, subject_id, kind) WHERE resolved_at IS NULL;
+CREATE TABLE IF NOT EXISTS prospects (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  trade TEXT NOT NULL,
+  city TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  website TEXT,
+  notes TEXT NOT NULL,
+  answers_own_phone INTEGER NOT NULL,
+  chain INTEGER NOT NULL,
+  spanish INTEGER NOT NULL
+);
 `;
 
 type Sql = DatabaseSync;

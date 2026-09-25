@@ -10,7 +10,8 @@ import { cancelReminder, advanceClockToReminder, tickReminders } from "../lib/re
 import { runScenario } from "../lib/replay";
 import { ensureSeed } from "../lib/seed";
 import { findConflict, listSlots } from "../lib/scheduling";
-import { lookupToken, issueToken } from "../lib/records";
+import { lookupToken, issueToken, addTimeline } from "../lib/records";
+import { inquiryView } from "../lib/view";
 import { deriveStages } from "../lib/stages";
 import { verifyElevenLabsSignature, verifySvixSignature, verifyTwilioSignature, twilioSignature } from "../lib/webhooks";
 import { executeTool } from "../lib/tools";
@@ -95,6 +96,24 @@ describe("journey", () => {
       expect(facts.email).toContain("@");
       expect(String(facts.address)).toMatch(/Port St\. Lucie|Tradition/);
     }
+  });
+
+  it("keeps a replay labeled simulated after a local continuation event", async () => {
+    const inquiryId = await runScenario("en");
+    addTimeline({ inquiryId, kind: "attachment", title: "Customer uploaded a photo", sourceKind: "live" });
+    const view = inquiryView(inquiryId);
+    expect(view?.mode).toBe("simulated_replay");
+    expect(view?.modeNote).toMatch(/not a live provider/);
+    expect(view?.stages[2].detail).toContain("not dispatched");
+  });
+
+  it("labels a telephone session as live without calling it a continuation page", async () => {
+    const inquiryId = await runScenario("en");
+    run("UPDATE sessions SET channel = 'telephone', provider = 'twilio', source_kind = 'live' WHERE inquiry_id = ?", inquiryId);
+    const view = inquiryView(inquiryId);
+    expect(view?.mode).toBe("live");
+    expect(view?.modeNote).toMatch(/Telephone session/);
+    expect(view?.modeNote).not.toMatch(/continuation page/);
   });
 
   it("keeps one inquiry when the caller switches language", async () => {
@@ -218,7 +237,7 @@ describe("signatures and stages", () => {
   });
 
   it("distinguishes failed email from delivery in the stage model", () => {
-    const failed = deriveStages({
+    const failedInput = {
       hasSession: true,
       sessionActive: false,
       callFailed: false,
@@ -228,7 +247,8 @@ describe("signatures and stages", () => {
       appointment: false,
       bookingFailed: false,
       reminderStatus: null,
-    });
+    };
+    const failed = deriveStages(failedInput);
     expect(failed[1].status).toBe("failed");
     const open = deriveStages({
       hasSession: true,
@@ -244,6 +264,13 @@ describe("signatures and stages", () => {
       reminderStatus: "pending",
     });
     expect(open.map((stage) => stage.status)).toEqual(["completed", "completed", "completed", "completed", "completed", "waiting"]);
+    expect(open[2].detail).toContain("not dispatched");
+    expect(open[3].detail).toContain("no payment");
+    expect(open[4].detail).toContain("not posted");
+    expect(open[5].detail).toContain("demo clock");
+    const dropped = deriveStages({ ...failedInput, callFailed: true });
+    expect(dropped[0].status).toBe("failed");
+    expect(dropped[0].detail).toContain("not a completed call");
   });
 
   it("skips a busy technician slot", () => {

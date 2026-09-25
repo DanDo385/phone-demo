@@ -64,6 +64,13 @@ export function formatDashboard(date: Date): string {
   return formatInTimeZone(date, BUSINESS_TZ, "EEE MMM d, yyyy · h:mm a");
 }
 
+export function demoClockLabel(offsetMs: number): string {
+  const hours = Math.round(offsetMs / 3_600_000);
+  if (!offsetMs) return "Demo clock +0 h. Wall time is unchanged.";
+  const waited = hours >= 48 ? "A real 48-hour wait did not elapse." : "A real wait did not elapse.";
+  return `Demo clock +${hours} h. ${waited} This offset is global for the demo.`;
+}
+
 export function nextSendingInstant(after: Date): Date {
   const probe = new Date(after.getTime());
   for (let i = 0; i < 14 * 24 * 2; i++) {

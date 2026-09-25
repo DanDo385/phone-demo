@@ -14,6 +14,7 @@ export function CustomerPortal({ token }: { token: string }) {
   const [data, setData] = useState<Payload | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+  const [uploadError, setUploadError] = useState("");
 
   async function load() {
     const response = await fetch(`/api/customer/${token}`);
@@ -28,7 +29,14 @@ export function CustomerPortal({ token }: { token: string }) {
     void load();
   }, [token]);
 
-  if (error) return <div className="portal"><p className="demo-flag">{error}</p></div>;
+  if (error) {
+    return (
+      <div className="portal">
+        <p className="demo-flag">{error}</p>
+        {error.includes("expired") ? <p><a href="/renew">Request a fresh link</a></p> : null}
+      </div>
+    );
+  }
   if (!data) return <div className="portal">Loading…</div>;
   const es = data.language === "es";
 
@@ -37,7 +45,12 @@ export function CustomerPortal({ token }: { token: string }) {
       <div className="demo-flag">{data.fictional}</div>
       <h1 className="wordmark">{es ? "Continúe su solicitud" : "Continue your request"}</h1>
       <p>{data.summary}</p>
-      {data.appointment && <p><b>{es ? "Visita" : "Visit"}:</b> {data.appointment}</p>}
+      {data.appointment && (
+        <p>
+          <b>{es ? "Reserva de demostración" : "Local demo hold"}:</b> {data.appointment}
+          <span className="muted"> · {es ? "no es un envío de técnico" : "not a dispatch"}</span>
+        </p>
+      )}
       <div className="seg">
         <button className={!es ? "on" : ""} onClick={() => setLanguage("en")}>English</button>
         <button className={es ? "on" : ""} onClick={() => setLanguage("es")}>Español</button>
@@ -57,13 +70,18 @@ export function CustomerPortal({ token }: { token: string }) {
       </div>
       <label className="muted" style={{ display: "block", marginTop: 12 }}>
         {es ? "Subir una foto (JPG, PNG o WebP, hasta 5 MB)" : "Upload a photo (JPG, PNG, or WebP, up to 5 MB)"}
+        {uploadError ? <div className="demo-flag">{uploadError}</div> : null}
         <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => {
           const file = event.target.files?.[0];
           if (!file) return;
           const body = new FormData();
           body.set("file", file);
           const response = await fetch(`/api/customer/${token}/upload`, { method: "POST", body });
-          if (!response.ok) setError(es ? "No se pudo guardar la foto." : "The photo could not be saved.");
+          if (!response.ok) {
+            setUploadError(es ? "No se pudo guardar la foto." : "The photo could not be saved.");
+            return;
+          }
+          setUploadError("");
           await load();
         }} />
       </label>

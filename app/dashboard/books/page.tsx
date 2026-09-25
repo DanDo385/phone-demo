@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { currentOwner } from "@/lib/http";
 import { formatMoney } from "@/lib/money";
 import { booksBalance, recentJournals, trialBalance } from "@/lib/ledger";
+import { getDemoOffset } from "@/lib/records";
 import { openFlags } from "@/lib/scoring";
+import { demoClockLabel } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +23,9 @@ export default async function BooksPage() {
           <div className="kicker">Fictional demo</div>
           <div className="wordmark" style={{ fontSize: 32 }}>Books</div>
         </div>
-        <Link href="/dashboard">Inquiries</Link>
+        <span><Link href="/dashboard">Inquiries</Link> · <Link href="/dashboard/prospects">Companies to call</Link></span>
       </header>
+      <p className="muted">{demoClockLabel(getDemoOffset())}</p>
       <section className="panel" style={{ marginTop: 16 }}>
         <p className={balance.balanced ? "muted" : "demo-flag"}>
           {balance.balanced ? "In balance" : "Out of balance"} · debits {formatMoney(balance.debit)} · credits {formatMoney(balance.credit)}
@@ -36,8 +39,8 @@ export default async function BooksPage() {
             {accounts.map((account) => (
               <tr key={account.code}>
                 <td>{account.code} {account.name}</td>
-                <td className="num">{account.debit ? formatMoney(account.debit) : ""}</td>
-                <td className="num">{account.credit ? formatMoney(account.credit) : ""}</td>
+                <td className="num">{formatMoney(account.debit)}</td>
+                <td className="num">{formatMoney(account.credit)}</td>
               </tr>
             ))}
           </tbody>
@@ -46,7 +49,10 @@ export default async function BooksPage() {
       <section className="panel" style={{ marginTop: 16 }}>
         <h2>Journals</h2>
         {journals.map((journal) => (
-          <p key={journal.id}>{journal.memo} · {journal.source_type} · {formatMoney(Number(journal.debit))}</p>
+          <p key={journal.id}>
+            {journal.inquiry_id ? <Link href={`/dashboard/inquiries/${journal.inquiry_id}`}>{journal.memo}</Link> : journal.memo}
+            {" "}· {journal.source_type} · {formatMoney(Number(journal.debit))}
+          </p>
         ))}
       </section>
       <section className="panel" style={{ marginTop: 16 }}>

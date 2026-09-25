@@ -19,7 +19,7 @@ export async function POST(request: Request, context: { params: Promise<{ token:
     from: inquiry?.preferred_language,
     to: language,
     reason: "Customer selected a language on the continuation page",
-    sourceKind: "live",
+    sourceKind: "simulated",
   });
   return json({ ok: true, language });
 }

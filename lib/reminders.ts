@@ -129,7 +129,10 @@ export function advanceClockToReminder(inquiryId: string): { offset: number; run
     "SELECT run_at FROM scheduled_jobs WHERE inquiry_id = ? AND kind = 'review_reminder' AND status = 'pending' ORDER BY run_at ASC LIMIT 1",
     inquiryId,
   );
-  if (!job) return { offset: advanceDemoClock(48 * 60 * 60 * 1000), runAt: null };
+  if (!job) {
+    const current = Number(get<{ value: string }>("SELECT value FROM settings WHERE key = ?", "demo_clock_offset_ms")?.value ?? 0);
+    return { offset: current, runAt: null };
+  }
   const needed = new Date(job.run_at).getTime() - Date.now() + 2000;
   const current = Number(get<{ value: string }>("SELECT value FROM settings WHERE key = ?", "demo_clock_offset_ms")?.value ?? 0);
   const offset = Math.max(current, needed);
