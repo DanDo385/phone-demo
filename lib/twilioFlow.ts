@@ -4,6 +4,7 @@ import { addTimeline, createInquiry, nowIso } from "./records";
 import { initialState } from "./dialogue";
 import { sameNumber, toE164 } from "./phone";
 import { analysisOf, openCall, prospectForCaller } from "./prospect/store";
+import { selfHostedTwiml, selfHostedVoice } from "./prospect/voiceEngine";
 
 function xml(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[ch] ?? ch);
@@ -22,7 +23,7 @@ export async function handleInbound(params: Record<string, string>): Promise<str
   if (sameNumber(from, process.env.TWILIO_PHONE_NUMBER)) {
     return twimlMessage("Forwarding loop prevented.");
   }
-  if (process.env.ELEVENLABS_PROSPECT_AGENT_ID) return connectProspect(callSid, from, to);
+  if (process.env.ELEVENLABS_PROSPECT_AGENT_ID || process.env.PROSPECT_VOICE_ENGINE === "selfhosted") return connectProspect(callSid, from, to);
   const stamp = nowIso();
   if (!existing) {
     run(
@@ -100,6 +101,8 @@ async function connectProspect(callSid: string, from: string, to: string): Promi
   }
   // Twilio retries webhooks; one call row per CallSid.
   if (!get("SELECT id FROM prospect_calls WHERE call_sid = ?", callSid)) openCall({ prospectId: prospect.id, channel: "phone", callSid });
+  const voice = selfHostedVoice();
+  if (voice) return selfHostedTwiml({ url: voice.url, prospectId: prospect.id, callSid, from, greeting: analysis.voice.first_message });
   const registered = await registerTwilioCall({
     from,
     to,

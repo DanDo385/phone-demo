@@ -18,7 +18,8 @@ import {
   staleLiveCalls,
 } from "./store";
 import { lookupPlace, scrapeWebsite } from "./sources";
-import { finalTranscript, saveRecording } from "./conversation";
+import { finalTranscript, isSelfHosted, saveRecording } from "./conversation";
+import { prewarmGreeting } from "./voiceEngine";
 
 const SUMMARY_MODEL = process.env.PROSPECT_SUMMARY_MODEL || "claude-opus-5";
 
@@ -39,6 +40,7 @@ export async function runAnalysis(prospectId: string): Promise<void> {
     setStage(prospectId, "writing_script");
     const analysis = await analyzeProspect({ website: prospect.website, site, place });
     saveAnalysis(prospectId, analysis);
+    void prewarmGreeting(analysis.voice.first_message);
     if (agentMailReady()) {
       const sent = await sendReportEmail(prospectById(prospectId)!, analysis);
       setReportEmailStatus(prospectId, sent.status === "sent" ? "sent" : `failed: ${sent.error ?? "unknown"}`);
@@ -83,7 +85,7 @@ export async function finalizeCall(callId: string): Promise<void> {
     const prospect = prospectById(call.prospect_id);
     const analysis = analysisOf(prospect);
     // Prefer ElevenLabs' final transcript (it has timings and no discarded turns), and keep the audio.
-    if (call.conversation_id) {
+    if (call.conversation_id && !isSelfHosted(call.conversation_id)) {
       const official = await finalTranscript(call.conversation_id);
       if (official) replaceLines(callId, official);
       // Audio is ready once the transcript is; a failure only means no playback.

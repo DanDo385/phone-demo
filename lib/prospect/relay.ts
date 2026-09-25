@@ -9,6 +9,8 @@ import { analysisOf, callForConversation, prospectById, replaceLines, type Line 
 // chunks, and records the transcript so the prospect's page can show it live.
 
 const MODEL = process.env.PROSPECT_VOICE_MODEL || "claude-opus-5";
+// Callers may pick one of these per request (the self-hosted voice service does, for A/B tests).
+const RELAY_MODELS = new Set(["claude-opus-5", "claude-sonnet-5", "claude-sonnet-5:fast", "claude-haiku-4-5"]);
 // Voice turns need a fast first token more than deep reasoning.
 const EFFORT = (process.env.PROSPECT_VOICE_EFFORT || "low") as "low" | "medium" | "high";
 
@@ -156,13 +158,26 @@ export function relayChat(input: { body: ChatRequest; prospectId: string; conver
       let spoken = "";
       try {
         send(chunk(completionId, { role: "assistant", content: "" }));
+        const requested = RELAY_MODELS.has(input.body.model || "") ? input.body.model! : MODEL;
+        // ":fast" runs the model with thinking off, for the quickest first word on a call.
+        const fast = requested.endsWith(":fast");
+        const model = requested.replace(/:fast$/, "");
+        // Haiku 4.5 takes neither adaptive thinking nor effort; Opus and Fable get refusal fallbacks.
+        const tuning = model.startsWith("claude-haiku")
+          ? {}
+          : fast
+            ? { thinking: { type: "disabled" as const }, output_config: { effort: "low" as const } }
+          : {
+              thinking: { type: "adaptive" as const },
+              output_config: { effort: EFFORT },
+              ...(model.startsWith("claude-opus") || model.startsWith("claude-fable")
+                ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
+                : {}),
+            };
         const stream = client.beta.messages.stream({
-          model: MODEL,
+          model,
           max_tokens: 4096,
-          betas: ["server-side-fallback-2026-07-01"],
-          fallbacks: "default",
-          thinking: { type: "adaptive" },
-          output_config: { effort: EFFORT },
+          ...tuning,
           system: [{ type: "text", text: voiceSystemPrompt(analysis), cache_control: { type: "ephemeral" } }],
           tools: toClaudeTools(input.body.tools),
           messages: toClaudeMessages(input.body.messages),

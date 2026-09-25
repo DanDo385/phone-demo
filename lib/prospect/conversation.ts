@@ -37,12 +37,29 @@ export async function finalTranscript(conversationId: string, waitMs = 20_000): 
   }
 }
 
-function recordingPath(callId: string): string {
-  return path.join(path.dirname(databasePath()), "recordings", `${callId}.mp3`);
+const TYPES = { mp3: "audio/mpeg", wav: "audio/wav" } as const;
+type Ext = keyof typeof TYPES;
+
+function recordingPath(callId: string, ext: Ext): string {
+  return path.join(path.dirname(databasePath()), "recordings", `${callId}.${ext}`);
+}
+
+function existing(callId: string): { file: string; type: string } | null {
+  for (const ext of Object.keys(TYPES) as Ext[]) {
+    const file = recordingPath(callId, ext);
+    if (fs.existsSync(file)) return { file, type: TYPES[ext] };
+  }
+  return null;
 }
 
 export function hasRecording(callId: string): boolean {
-  return fs.existsSync(recordingPath(callId));
+  return existing(callId) !== null;
+}
+
+export function storeRecording(callId: string, audio: Buffer, ext: Ext): void {
+  const file = recordingPath(callId, ext);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, audio);
 }
 
 // Downloaded once and served from disk, so the browser gets byte ranges and can seek.
@@ -51,13 +68,17 @@ export async function saveRecording(callId: string, conversationId: string): Pro
   if (!h) return false;
   const response = await fetch(`${API}/${conversationId}/audio`, { headers: h, signal: AbortSignal.timeout(60_000) }).catch(() => null);
   if (!response?.ok) return false;
-  const file = recordingPath(callId);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, Buffer.from(await response.arrayBuffer()));
+  storeRecording(callId, Buffer.from(await response.arrayBuffer()), "mp3");
   return true;
 }
 
-export function readRecording(callId: string): Buffer | null {
-  const file = recordingPath(callId);
-  return fs.existsSync(file) ? fs.readFileSync(file) : null;
+export function readRecording(callId: string): { audio: Buffer; type: string } | null {
+  const found = existing(callId);
+  return found ? { audio: fs.readFileSync(found.file), type: found.type } : null;
+}
+
+// Conversations run by the self-hosted voice service (voice/) use this prefix; ElevenLabs
+// has nothing for them, and the service uploads its own transcript and recording.
+export function isSelfHosted(conversationId: string | null): boolean {
+  return Boolean(conversationId?.startsWith("self_"));
 }

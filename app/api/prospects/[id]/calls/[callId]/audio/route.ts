@@ -8,9 +8,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const { id, callId } = await context.params;
   const call = callById(callId);
   if (!call || call.prospect_id !== id) return json({ error: "Not found" }, 404);
-  const audio = readRecording(callId);
-  if (!audio) return json({ error: "No recording" }, 404);
-  const base = { "Content-Type": "audio/mpeg", "Accept-Ranges": "bytes", "Cache-Control": "private, max-age=3600" };
+  const recording = readRecording(callId);
+  if (!recording) return json({ error: "No recording" }, 404);
+  const { audio } = recording;
+  const base = { "Content-Type": recording.type, "Accept-Ranges": "bytes", "Cache-Control": "private, max-age=3600" };
   const range = request.headers.get("range")?.match(/^bytes=(\d*)-(\d*)$/);
   if (!range) return new Response(new Uint8Array(audio), { headers: { ...base, "Content-Length": String(audio.length) } });
   const start = range[1] ? Number(range[1]) : Math.max(0, audio.length - Number(range[2]));
