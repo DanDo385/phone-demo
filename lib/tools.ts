@@ -305,8 +305,10 @@ async function book(
     return { name: "book_appointment", ok: false, error: "That time conflicts with another appointment", code: "conflict" };
   }
   let googleEventId: string | null = null;
-  let calendarSource: SourceKind | "simulated" = googleConfigured() ? "live" : "simulated";
-  if (googleConfigured()) {
+  // Replays and simulated turns never write to the real calendar, matching email delivery.
+  const useGoogle = googleConfigured() && delivery === "connected";
+  let calendarSource: SourceKind | "simulated" = useGoogle ? "live" : "simulated";
+  if (useGoogle) {
     const inserted = await googleInsertEvent({
       summary: `[DEMO] ${service.name.en} — ${facts.name ?? "Customer"}`,
       description: `Inquiry ${inquiryId}\n${facts.issue ?? ""}\n${facts.address}\n${facts.phone ?? ""} ${facts.email ?? ""}\nPreferred language: ${inquiry.preferred_language}`,
@@ -387,7 +389,7 @@ async function book(
     data: {
       ...appointmentPayload(appointmentId, tech.name, tech.id, start, inquiry.preferred_language),
       confirmation_status: confirmationStatus,
-      calendar: googleConfigured() ? "google" : "local_demo",
+      calendar: useGoogle ? "google" : "local_demo",
     },
   };
 }
