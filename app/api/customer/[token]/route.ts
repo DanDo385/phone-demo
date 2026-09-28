@@ -16,13 +16,19 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
   const appointment = get<{ starts_at: string }>("SELECT starts_at FROM appointments WHERE inquiry_id = ? AND status = 'booked' ORDER BY created_at DESC LIMIT 1", inquiry.id);
   const messages = all<{ speaker: string; text: string }>("SELECT speaker, text FROM transcript_turns WHERE inquiry_id = ? ORDER BY ordinal DESC LIMIT 8", inquiry.id).reverse();
   if (!get("SELECT id FROM timeline_events WHERE inquiry_id = ? AND kind = 'link_opened'", inquiry.id)) {
-    addTimeline({ inquiryId: inquiry.id, kind: "link_opened", title: "Customer opened the continuation link", sourceKind: "live" });
+    addTimeline({
+      inquiryId: inquiry.id,
+      kind: "link_opened",
+      title: "Customer opened the continuation link",
+      detail: "Local continuation page, not a provider callback",
+      sourceKind: "simulated",
+    });
   }
   const service = serviceByCode(facts.serviceCode);
   const lang = inquiry.preferred_language;
   const summary = lang === "es"
-    ? `${facts.name || "Hola"}, su solicitud es ${facts.issue || service?.name.es || "una visita"} en ${facts.address || "la dirección indicada"}.`
-    : `${facts.name || "Hello"}, your request is ${facts.issue || service?.name.en || "a visit"} at ${facts.address || "the address you gave"}.`;
+    ? `${facts.name || "Hola"}, su solicitud es ${facts.issue || service?.name.es || "una visita"} en ${facts.address || "una dirección que no está en el expediente"}.`
+    : `${facts.name || "Hello"}, your request is ${facts.issue || service?.name.en || "a visit"} at ${facts.address || "an address that is not on file"}.`;
   return json({
     language: lang,
     summary,

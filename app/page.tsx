@@ -22,7 +22,7 @@ export default function HomePage() {
         <section className="panel">
           <h2>Integrations</h2>
           {items.map((item) => (
-            <div key={item.id} className="row"><span>{item.label}</span><b>{item.mode}</b></div>
+            <div key={item.id} className="row"><span>{item.label}</span><b>{item.mode} · {item.verified}</b></div>
           ))}
           <p className="muted">Missing credentials stay in simulated mode. A failed live send is never shown as delivered.</p>
         </section>

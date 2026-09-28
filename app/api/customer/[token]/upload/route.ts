@@ -26,7 +26,7 @@ export async function POST(request: Request, context: { params: Promise<{ token:
   fs.writeFileSync(storage, bytes);
   run(
     `INSERT INTO attachments(id, inquiry_id, filename, content_type, size_bytes, storage_path, caption, created_at, source_kind)
-     VALUES(?, ?, ?, ?, ?, ?, ?, ?, 'live')`,
+     VALUES(?, ?, ?, ?, ?, ?, ?, ?, 'simulated')`,
     id("att"),
     access.inquiry_id,
     safe,
@@ -36,6 +36,12 @@ export async function POST(request: Request, context: { params: Promise<{ token:
     "Customer upload. A photo does not confirm a diagnosis or a price. Fictional demo if this is sample data.",
     nowIso(),
   );
-  addTimeline({ inquiryId: access.inquiry_id, kind: "attachment", title: "Customer uploaded a photo", sourceKind: "live" });
+  addTimeline({
+    inquiryId: access.inquiry_id,
+    kind: "attachment",
+    title: "Customer uploaded a photo",
+    detail: "Local continuation page, not a provider callback",
+    sourceKind: "simulated",
+  });
   return json({ ok: true });
 }

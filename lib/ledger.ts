@@ -179,11 +179,14 @@ export function booksBalance(): { debit: number; credit: number; balanced: boole
   return { debit, credit, balanced: debit === credit };
 }
 
-export function recentJournals(limit = 20): Array<{ id: string; memo: string; source_type: string; posted_at: string; debit: number }> {
+export function recentJournals(limit = 20): Array<{ id: string; memo: string; source_type: string; posted_at: string; debit: number; invoice_id: string | null; inquiry_id: string | null }> {
   return all(
     `SELECT j.id AS id, j.memo AS memo, j.source_type AS source_type, j.posted_at AS posted_at,
+            j.invoice_id AS invoice_id, i.inquiry_id AS inquiry_id,
             COALESCE(SUM(l.debit_cents), 0) AS debit
-     FROM journals j LEFT JOIN journal_lines l ON l.journal_id = j.id
+     FROM journals j
+     LEFT JOIN journal_lines l ON l.journal_id = j.id
+     LEFT JOIN invoices i ON i.id = j.invoice_id
      GROUP BY j.id ORDER BY j.posted_at DESC LIMIT ?`,
     limit,
   );

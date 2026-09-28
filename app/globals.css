@@ -124,7 +124,9 @@ button, input, select, textarea { font: inherit; }
 .src.live { background: #e5f6eb; color: var(--good); }
 .src { white-space: nowrap; }
 
-.transcript { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 220px); overflow: auto; padding-right: 4px; }
+.transcript { display: flex; flex-direction: column; gap: 10px; max-height: min(70vh, 640px); overflow: auto; padding-right: 4px; }
+.scroll-pane { max-height: 320px; overflow: auto; }
+.next-line { margin: 0 0 12px; }
 .bubble { max-width: 92%; border-radius: 16px; padding: 10px 12px; }
 .bubble.caller { background: white; border: 1px solid var(--line); }
 .bubble.agent { background: var(--tide-deep); color: white; margin-left: auto; }
@@ -174,13 +176,24 @@ pre { white-space: pre-wrap; font-size: 12px; background: var(--sand); padding: 
 
 .books { width: 100%; border-collapse: collapse; }
 .books th, .books td { text-align: left; padding: 6px 0; border-bottom: 1px solid var(--line); }
-.books .num { text-align: right; font-variant-numeric: tabular-nums; }
-.list a { display: block; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
+.books td.num, .books th.num {
+  width: auto;
+  height: auto;
+  display: table-cell;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  font-weight: 500;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.list a, .prospects article { display: block; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
+.prospects { max-height: 70vh; overflow: auto; }
 .muted { color: var(--muted); }
 .demo-flag { font-size: 12px; color: var(--coral); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 
 @media (max-width: 980px) {
   .shell, .grid-2, .voice-grid { grid-template-columns: 1fr; }
-  .transcript { max-height: none; }
+  .transcript { max-height: 70vh; }
   .topbar { flex-direction: column; align-items: flex-start; }
 }

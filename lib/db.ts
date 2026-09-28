@@ -391,6 +391,21 @@ CREATE TABLE IF NOT EXISTS relay_turns (
   content_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+-- Generated sample shops for the dashboard's "Companies to call" (lib/prospects.ts). Not the
+-- same thing as prospects, which holds /try demo requests.
+CREATE TABLE IF NOT EXISTS outreach_companies (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  trade TEXT NOT NULL,
+  city TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  website TEXT,
+  notes TEXT NOT NULL,
+  answers_own_phone INTEGER NOT NULL,
+  chain INTEGER NOT NULL,
+  spanish INTEGER NOT NULL
+);
 `;
 
 type Sql = DatabaseSync;
@@ -401,6 +416,14 @@ let singletonPath: string | null = null;
 export function databasePath(): string {
   if (process.env.DATABASE_PATH) return process.env.DATABASE_PATH;
   return path.join(process.cwd(), "data", "palmetto.sqlite");
+}
+
+// A database created on master before the /try merge holds the "Companies to call" list in a
+// table named prospects. Move it aside so the /try prospects table can be created.
+function renameLegacyTables(db: Sql): void {
+  const cols = (db.prepare("PRAGMA table_info(prospects)").all() as Array<{ name: string }>).map((c) => c.name);
+  const moved = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'outreach_companies'").get();
+  if (cols.includes("answers_own_phone") && !moved) db.exec("ALTER TABLE prospects RENAME TO outreach_companies");
 }
 
 // CREATE TABLE IF NOT EXISTS leaves existing tables alone; add columns introduced later.
@@ -419,6 +442,7 @@ export function getDb(): Sql {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const db = new DatabaseSync(target);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
+  renameLegacyTables(db);
   db.exec(SCHEMA);
   addMissingColumns(db);
   singleton = db;
