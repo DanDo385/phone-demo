@@ -1,0 +1,35 @@
+# Next.js standalone server. Secrets resolve through `op run` from 1Password at start;
+# nothing secret is written to disk. See deploy/README.md.
+[Unit]
+Description=Docent Solutions web app (Next.js standalone)
+Wants=network-online.target docent-litestream.service
+After=network-online.target docent-litestream.service
+
+[Service]
+Type=simple
+User=docent
+Group=docent
+# Symlink to the current release; resolved at start, so restart after switching it.
+WorkingDirectory=/srv/docent/app
+# OP_SERVICE_ACCOUNT_TOKEN only (root:docent 0640).
+EnvironmentFile=/etc/docent/op.env
+Environment=HOME=/var/lib/docent
+ExecStart=/usr/bin/op run --env-file=/etc/docent/app.env.tpl -- /usr/bin/node server.js
+Restart=always
+RestartSec=3
+# The scheduler and SSE streams finish their current write on SIGTERM.
+TimeoutStopSec=20
+KillSignal=SIGTERM
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/docent
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

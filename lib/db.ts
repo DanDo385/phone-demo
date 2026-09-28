@@ -345,6 +345,14 @@ CREATE TABLE IF NOT EXISTS prospects (
   analysis_json TEXT,
   error TEXT,
   report_email_status TEXT,
+  owner_name TEXT,
+  role TEXT,
+  trade TEXT,
+  utm_json TEXT,
+  lead_status TEXT NOT NULL DEFAULT 'new' CHECK (lead_status IN ('new','contacted','walkthrough_booked','qualified','pilot','lost')),
+  qualification_json TEXT,
+  place_id TEXT,
+  place_confirmed INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -406,6 +414,54 @@ CREATE TABLE IF NOT EXISTS outreach_companies (
   chain INTEGER NOT NULL,
   spanish INTEGER NOT NULL
 );
+-- Consent records are evidence: the exact text shown and its version. Append-only; a
+-- withdrawal is a new row with granted = 0.
+CREATE TABLE IF NOT EXISTS consents (
+  id TEXT PRIMARY KEY,
+  prospect_id TEXT NOT NULL,
+  channel TEXT NOT NULL CHECK (channel IN ('email','sms','call_recording')),
+  granted INTEGER NOT NULL CHECK (granted IN (0,1)),
+  text_shown TEXT NOT NULL,
+  text_version TEXT NOT NULL,
+  ip TEXT,
+  user_agent TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS consents_prospect ON consents(prospect_id, channel, created_at);
+CREATE TRIGGER IF NOT EXISTS consents_no_update BEFORE UPDATE ON consents
+BEGIN SELECT RAISE(ABORT, 'consents are append-only'); END;
+CREATE TRIGGER IF NOT EXISTS consents_no_delete BEFORE DELETE ON consents
+BEGIN SELECT RAISE(ABORT, 'consents are append-only'); END;
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  anonymous_id TEXT NOT NULL,
+  prospect_id TEXT,
+  name TEXT NOT NULL,
+  props_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS events_name ON events(name, created_at);
+CREATE INDEX IF NOT EXISTS events_anonymous ON events(anonymous_id, created_at);
+CREATE INDEX IF NOT EXISTS events_prospect ON events(prospect_id, created_at) WHERE prospect_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS previews (
+  id TEXT PRIMARY KEY,
+  prospect_id TEXT NOT NULL,
+  template_key TEXT NOT NULL,
+  hero_variant TEXT,
+  image_selection_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS previews_prospect ON previews(prospect_id, updated_at);
+CREATE TABLE IF NOT EXISTS bookings_walkthrough (
+  id TEXT PRIMARY KEY,
+  prospect_id TEXT NOT NULL,
+  calendar_event_id TEXT,
+  starts_at TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS bookings_walkthrough_prospect ON bookings_walkthrough(prospect_id, starts_at);
 `;
 
 type Sql = DatabaseSync;
@@ -427,9 +483,30 @@ function renameLegacyTables(db: Sql): void {
 }
 
 // CREATE TABLE IF NOT EXISTS leaves existing tables alone; add columns introduced later.
+const PROSPECT_COLUMNS: Array<[string, string]> = [
+  ["owner_name", "TEXT"],
+  ["role", "TEXT"],
+  ["trade", "TEXT"],
+  ["utm_json", "TEXT"],
+  // `status` is the analysis pipeline (pending, ready, failed); this is the sales pipeline.
+  ["lead_status", "TEXT NOT NULL DEFAULT 'new' CHECK (lead_status IN ('new','contacted','walkthrough_booked','qualified','pilot','lost'))"],
+  // lib/qualification.ts: five criteria, each scored 0-2.
+  ["qualification_json", "TEXT"],
+  ["place_id", "TEXT"],
+  ["place_confirmed", "INTEGER NOT NULL DEFAULT 0"],
+];
+
+function columns(db: Sql, table: string): string[] {
+  return (db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).map((c) => c.name);
+}
+
 function addMissingColumns(db: Sql): void {
-  const cols = (db.prepare("PRAGMA table_info(prospect_lines)").all() as Array<{ name: string }>).map((c) => c.name);
-  if (!cols.includes("at_secs")) db.exec("ALTER TABLE prospect_lines ADD COLUMN at_secs REAL");
+  if (!columns(db, "prospect_lines").includes("at_secs")) db.exec("ALTER TABLE prospect_lines ADD COLUMN at_secs REAL");
+  const prospectCols = columns(db, "prospects");
+  for (const [name, type] of PROSPECT_COLUMNS) {
+    if (!prospectCols.includes(name)) db.exec(`ALTER TABLE prospects ADD COLUMN ${name} ${type}`);
+  }
+  db.exec("CREATE INDEX IF NOT EXISTS prospects_lead_status ON prospects(lead_status, updated_at)");
 }
 
 export function getDb(): Sql {

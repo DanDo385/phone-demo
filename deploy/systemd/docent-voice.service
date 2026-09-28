@@ -1,0 +1,31 @@
+# Self-hosted voice service from voice/ (Pipecat). Listens on loopback only; Caddy exposes
+# /voice/twilio (wss) and /voice/prewarm. See voice/README.md.
+[Unit]
+Description=Docent Solutions voice service (Pipecat)
+Wants=network-online.target docent-app.service
+After=network-online.target docent-app.service
+
+[Service]
+Type=simple
+User=docent
+Group=docent
+WorkingDirectory=/srv/docent/voice
+EnvironmentFile=/etc/docent/op.env
+Environment=HOME=/var/lib/docent
+# Model caches (Silero, Smart Turn) live here, not in the code checkout.
+Environment=XDG_CACHE_HOME=/var/lib/docent/cache
+ExecStart=/usr/bin/op run --env-file=/etc/docent/voice.env.tpl -- /srv/docent/voice/.venv/bin/uvicorn server:app --host 127.0.0.1 --port 8765 --no-server-header
+Restart=always
+RestartSec=3
+# Let an in-progress call's finish upload complete.
+TimeoutStopSec=30
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/docent
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

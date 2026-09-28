@@ -1,13 +1,14 @@
-/* Prospect demo. Scoped under .try so it never touches the Palmetto screens. */
+/* Prospect demo. Scoped under .try so it never touches the Palmetto screens. Brand colors
+   come from --brand-* (lib/brand.ts); the status colors below are not brand values. */
 .try {
-  --t-ink: #101828;
-  --t-ink-2: #344054;
-  --t-muted: #667085;
-  --t-line: #e4e7ec;
-  --t-bg: #f6f7f9;
-  --t-card: #ffffff;
-  --t-accent: #1f5eff;
-  --t-accent-soft: #eaf0ff;
+  --t-ink: var(--brand-ink);
+  --t-ink-2: var(--brand-ink-soft);
+  --t-muted: var(--brand-muted);
+  --t-line: var(--brand-line);
+  --t-bg: var(--brand-paper);
+  --t-card: var(--brand-card);
+  --t-accent: var(--brand-accent);
+  --t-accent-soft: var(--brand-accent-soft);
   --t-good: #067647;
   --t-good-soft: #e7f6ee;
   --t-warn: #b54708;
@@ -42,11 +43,11 @@
 .try-form { display: grid; gap: 14px; margin-top: 28px; max-width: 620px; }
 .try-field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
 .try-field .hint { font-weight: 400; color: var(--t-muted); }
-.try-field input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid #d0d5dd; border-radius: 10px; background: #fff; color: var(--t-ink); }
+.try-field input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid #d0d5dd; border-radius: 10px; background: var(--t-card); color: var(--t-ink); }
 .try-field input:focus { outline: 2px solid var(--t-accent); outline-offset: 1px; border-color: transparent; }
 .try-btn { appearance: none; border: 0; border-radius: 10px; padding: 12px 18px; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer; background: var(--t-accent); color: #fff; display: inline-flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none; }
 .try-btn:disabled { opacity: 0.6; cursor: default; }
-.try-btn.ghost { background: #fff; color: var(--t-ink); border: 1px solid #d0d5dd; }
+.try-btn.ghost { background: var(--t-card); color: var(--t-ink); border: 1px solid #d0d5dd; }
 .try-btn.danger { background: var(--t-bad); }
 .try-error { color: var(--t-bad); background: var(--t-bad-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
 .try-fine { color: var(--t-muted); font-size: 13px; line-height: 1.5; }
@@ -87,7 +88,7 @@
 /* Call flow */
 .try-flow { display: grid; gap: 10px; }
 @media (min-width: 900px) { .try-flow { grid-template-columns: repeat(4, 1fr); align-items: stretch; } }
-.try-node { position: relative; border: 1px solid var(--t-line); border-radius: 12px; padding: 14px; background: #fff; }
+.try-node { position: relative; border: 1px solid var(--t-line); border-radius: 12px; padding: 14px; background: var(--t-card); }
 .try-node .n { font-size: 12px; color: var(--t-muted); font-weight: 600; }
 .try-node strong { display: block; margin: 4px 0; font-size: 15px; }
 .try-node p { margin: 0; font-size: 13px; color: var(--t-ink-2); line-height: 1.45; }
@@ -100,7 +101,7 @@
 
 /* Gaps */
 .try-gaps { display: grid; gap: 10px; }
-.try-gap { border: 1px solid var(--t-line); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; background: #fff; }
+.try-gap { border: 1px solid var(--t-line); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; background: var(--t-card); }
 .try-gap.high { border-left-color: var(--t-bad); }
 .try-gap.medium { border-left-color: var(--t-warn); }
 .try-gap.low { border-left-color: #98a2b3; }
@@ -108,13 +109,13 @@
 .try-gap p { margin: 6px 0 0; font-size: 14px; color: var(--t-ink-2); line-height: 1.45; }
 .try-gap .why { color: var(--t-muted); }
 .try-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.try-tab { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--t-line); background: #fff; cursor: pointer; color: var(--t-ink-2); }
+.try-tab { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--t-line); background: var(--t-card); cursor: pointer; color: var(--t-ink-2); }
 .try-tab[aria-pressed="true"] { background: var(--t-ink); color: #fff; border-color: var(--t-ink); }
 
 /* Calendar */
 .try-cal { display: grid; gap: 8px; grid-auto-flow: column; grid-auto-columns: minmax(96px, 1fr); overflow-x: auto; padding-bottom: 4px; }
 .try-cal-day h4 { margin: 0 0 6px; font-size: 13px; color: var(--t-ink-2); }
-.try-slot { font-size: 12px; padding: 6px 8px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--t-line); background: #fff; }
+.try-slot { font-size: 12px; padding: 6px 8px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--t-line); background: var(--t-card); }
 .try-slot.busy { background: repeating-linear-gradient(45deg, #f2f4f7, #f2f4f7 6px, #eaecf0 6px, #eaecf0 12px); color: var(--t-muted); }
 .try-slot.booked { background: var(--t-good-soft); border-color: #abefc6; color: var(--t-good); font-weight: 600; animation: try-in 0.4s ease-out; }
 
