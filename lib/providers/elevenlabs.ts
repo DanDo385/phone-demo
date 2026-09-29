@@ -14,22 +14,25 @@ export async function signedUrl(agentId: string): Promise<{ ok: true; signedUrl:
 export async function registerTwilioCall(input: {
   from: string;
   to: string;
-  inquiryId: string;
-  language: string;
+  inquiryId?: string;
+  language?: string;
+  agentId?: string;
+  dynamicVariables?: Record<string, string>;
 }): Promise<{ ok: true; twiml: string } | { ok: false; error: string }> {
-  if (!process.env.ELEVENLABS_API_KEY || !process.env.ELEVENLABS_AGENT_ID) {
+  const agentId = input.agentId || process.env.ELEVENLABS_AGENT_ID;
+  if (!process.env.ELEVENLABS_API_KEY || !agentId) {
     return { ok: false, error: "ElevenLabs agent is not configured" };
   }
   const response = await fetch("https://api.elevenlabs.io/v1/convai/twilio/register-call", {
     method: "POST",
     headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY, "Content-Type": "application/json" },
     body: JSON.stringify({
-      agent_id: process.env.ELEVENLABS_AGENT_ID,
+      agent_id: agentId,
       from_number: input.from,
       to_number: input.to,
       direction: "inbound",
       conversation_initiation_client_data: {
-        dynamic_variables: {
+        dynamic_variables: input.dynamicVariables ?? {
           inquiry_id: input.inquiryId,
           preferred_language: input.language,
         },

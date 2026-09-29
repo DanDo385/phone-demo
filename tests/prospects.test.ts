@@ -2,7 +2,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { closeDb, resetDbForTests } from "../lib/db";
+import { DatabaseSync } from "node:sqlite";
+import { all, closeDb, get, resetDbForTests } from "../lib/db";
 import { catalogRecords, prospectCounts, rankProspects } from "../lib/prospects";
 import { ensureSeed } from "../lib/seed";
 import { setAskForTests, type JevAnswer } from "../lib/scoring";
@@ -78,5 +79,23 @@ describe("company outreach ranking", () => {
     expect(ranked.considered).toBe(5);
     expect(ranked.rows).toHaveLength(5);
     expect(ranked.matchLabel).toMatch(/closest record/);
+  });
+});
+
+describe("table names after the /try merge", () => {
+  it("moves a master-era prospects table to outreach_companies and creates the /try prospects table", () => {
+    closeDb();
+    const file = path.join(dir, "master-era.sqlite");
+    const legacy = new DatabaseSync(file);
+    legacy.exec(`CREATE TABLE prospects (id TEXT PRIMARY KEY, name TEXT NOT NULL, trade TEXT NOT NULL, city TEXT NOT NULL,
+      phone TEXT, email TEXT, website TEXT, notes TEXT NOT NULL, answers_own_phone INTEGER NOT NULL, chain INTEGER NOT NULL, spanish INTEGER NOT NULL)`);
+    legacy.exec("INSERT INTO prospects VALUES ('o1', 'Heron Plumbing', 'plumbing', 'Stuart', NULL, NULL, NULL, 'n', 1, 0, 0)");
+    legacy.close();
+
+    resetDbForTests(file);
+    expect(get("SELECT name FROM outreach_companies WHERE id = 'o1'")).toEqual({ name: "Heron Plumbing" });
+    const cols = all<{ name: string }>("PRAGMA table_info(prospects)").map((c) => c.name);
+    expect(cols).toContain("analysis_json");
+    expect(cols).not.toContain("answers_own_phone");
   });
 });

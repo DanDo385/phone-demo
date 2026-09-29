@@ -1,0 +1,23 @@
+[project]
+name = "phone-voice"
+version = "0.1.0"
+description = "Self-hosted voice pipeline for the phone demo: Twilio Media Streams, open-weight STT/TTS, Claude via the app's relay."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "pipecat-ai[silero,websocket,openai]==1.11.0",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "httpx>=0.27",
+  "websockets>=13",
+  "numpy>=1.26.4,<3",
+]
+
+[project.optional-dependencies]
+# Local CPU Kokoro for comparison with the hosted one.
+local-tts = ["pipecat-ai[kokoro]==1.11.0"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false

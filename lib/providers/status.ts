@@ -98,6 +98,11 @@ export function twilioConfigured(): boolean {
   return envPresent("TWILIO_ACCOUNT_SID") && envPresent("TWILIO_AUTH_TOKEN") && envPresent("TWILIO_PHONE_NUMBER");
 }
 
+// AgentMail itself is set up. Prospect mail needs only this; Palmetto mail also needs the test address.
+export function agentMailReady(): boolean {
+  return envPresent("AGENTMAIL_API_KEY") && envPresent("AGENTMAIL_INBOX_ID");
+}
+
 export function mailConfigured(): boolean {
   return envPresent("AGENTMAIL_API_KEY") && envPresent("AGENTMAIL_INBOX_ID") && envPresent("TEST_CUSTOMER_EMAIL");
 }

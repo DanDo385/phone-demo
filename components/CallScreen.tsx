@@ -51,6 +51,8 @@ export function CallScreen({ elevenlabs }: { elevenlabs: boolean }) {
     const mod = await import("@elevenlabs/react");
     const conversation = await mod.Conversation.startSession({
       signedUrl,
+      // Tool webhooks read inquiry_id from these; the telephone path sets the same names in register-call.
+      dynamicVariables: { inquiry_id: id, preferred_language: mode === "es" ? "es" : "en" },
       onMessage: (message: { message?: string; source?: string }) => {
         const textValue = message.message || "";
         const speaker = message.source === "user" ? "caller" : "agent";

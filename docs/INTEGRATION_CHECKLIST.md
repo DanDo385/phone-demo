@@ -1,28 +1,17 @@
 # Integration checklist
 
-Checked on this machine on 2026-09-22. No secret values are included.
+Checked on 2026-09-24 through the `phone-demo-dev` Environment with read-only API calls. No secret values are included.
 
-1Password CLI is installed (`op` 2.33.1) and the desktop app is present. `op account list` shows `my.1password.com` for `djm385@gmail.com`. `op whoami` returned **account is not signed in**. No item metadata was read. No production agent, number, inbox, or calendar was changed.
+Credentials come from `.1password/project.toml` → Environment `phone-demo-dev`. See `docs/SETUP.md` → 1Password.
+`envsync.py --check` reports no drift.
 
-## Unlock 1Password
-
-1. Open the 1Password app and unlock the `my.1password.com` account.
-2. Settings → Security: turn on Touch ID (or the platform authenticator).
-3. Settings → Developer: enable **Integrate with 1Password CLI**.
-4. In a terminal, run `op signin --account my.1password.com` and approve the prompt.
-5. Search item titles only, for example `op item list --format json | jq '.[].title'`, then `op item get "ITEM" --fields label=...`.
-6. Put `op://` references in an uncommitted `.env.op` based on `.env.op.example`.
-7. Start the app with `op run --env-file=.env.op -- npm run dev`.
-
-Until that succeeds, the app runs on local SQLite and labels provider actions as simulated.
-
-| Integration | Credential | Permissions needed | Connection | Demo resource | Remaining action |
-| --- | --- | --- | --- | --- | --- |
-| ElevenLabs API key, agent id, voices | Missing | Agents, signed URLs, speech synthesis, Twilio register-call | Unverified | None selected | Unlock 1Password, then dry-run `npm run setup:elevenlabs`. Create or update only an agent named Palmetto Coast Demo Receptionist. |
-| Twilio SID, token, demo number | Missing | Voice webhooks on one demo number | Unverified | None selected | Add a demo number. Point Voice to `/api/webhooks/twilio/voice`. Do not import a production number into ElevenLabs. |
-| AgentMail key and inbox | Missing | Send and receive on one demo inbox; Svix webhook secret | Unverified | None selected | Set `TEST_CUSTOMER_EMAIL` before any real send. Other recipients are refused. |
-| Google Calendar OAuth and calendar id | Missing | Calendar scope via OAuth refresh token. An API key is not enough. | Unverified | Local demo calendar | Authorize a demo calendar only. |
-| Supabase / Postgres | Missing | Server-side service role, never in the browser | Not applicable | `data/palmetto.sqlite` | Local SQLite is the active database. |
-| Hosting or tunnel | Missing | Public HTTPS for Twilio, ElevenLabs, and AgentMail webhooks | Unverified | `http://localhost:3000` | Use a tunnel you already operate, or ngrok, and set `APP_BASE_URL`. |
-
-Real email and telephone calls stay disabled until `TEST_CUSTOMER_EMAIL` and `TEST_CUSTOMER_PHONE` are set to addresses you designate. No test recipient was found in the environment.
+| Integration | Credential | Verified | Demo resource | Remaining action |
+| --- | --- | --- | --- | --- |
+| Google Calendar | Found (`Google \| dan@magro.dev` → `oauth_phone_demo`) | Refresh token works. Scopes: `calendar.events`, `calendar.freebusy`. FreeBusy on the demo calendar succeeds. | Agent Phone Demo calendar (dan@magro.dev, Eastern) | None. |
+| ElevenLabs | API key and agent id found (agent id not yet in the Environment). Webhook secret empty. | Agent created. A real text-driven conversation called `save_customer_details` and `check_availability` on the public URL and quoted the real first Google slot. | Palmetto Coast Demo Receptionist (`agent_2901m3amewqwe9s8tfb9ptmx41ea`), LLM `claude-haiku-4-5` | Paste the agent id into `ELEVENLABS_AGENT_ID` in the Environment. Set the post-call webhook and its secret. |
+| Twilio | SID, auth token, API key found | Account active, **Trial**. **No phone numbers on the account.** `phone_number` in 1Password is marked "not purchased". | None yet | Upgrade the account (trial calls play a notice and reach only verified numbers). Buy the number, then point Voice to `/api/webhooks/twilio/voice` and status to `/api/webhooks/twilio/status`. |
+| AgentMail | Key and `inbox_id` found | Inbox `phone-agent@agentmail.to` exists. No webhooks. | phone-agent@agentmail.to | Fill `test_customer_email`. Create the webhook to `/api/webhooks/agentmail` and store its secret. |
+| TypeSafe Jev | Found | Not probed | n/a | None. |
+| Test recipients | `test_customer_email` / `test_customer_phone` empty | n/a | n/a | Fill both in the Phone Demo item and the Environment. Real email and calls are refused for every other address. |
+| Public HTTPS | n/a | `https://phone-demo.magro.dev` → tunnel `magro-mbp-backends` → `127.0.0.1:3000`. Tool route returns 401 without the secret; Twilio webhook returns 403 unsigned. | phone-demo.magro.dev | Change `APP_BASE_URL` in the Environment to `https://phone-demo.magro.dev` (the manifest already says so). The app must be running on port 3000. |
+| Supabase / Postgres | Not used | n/a | `data/palmetto.sqlite` | Local SQLite is the active database. |

@@ -1,21 +1,355 @@
 {
   "name": "Palmetto Coast Demo Receptionist",
+  "tags": [
+    "demo",
+    "palmetto-coast"
+  ],
   "conversation_config": {
     "agent": {
       "language": "en",
+      "dynamic_variables": {
+        "dynamic_variable_placeholders": {
+          "inquiry_id": "dashboard-test",
+          "preferred_language": "en"
+        }
+      },
       "first_message": "Thanks for calling Palmetto Coast Home Services. I’m the AI assistant, and this call is transcribed. You can speak English or Spanish. Puede hablar en español.",
       "prompt": {
         "prompt": "You are the AI receptionist for Palmetto Coast Home Services, a fictional demonstration contractor in Port St. Lucie, Florida. Say that you are an AI assistant and that the call is transcribed.\n\nLanguages: English and Spanish only. Use the language_detection system tool to switch. Do not switch because of a person’s name, a street name, one Spanish or English word, or silence. If you are unsure, ask a short question: English or Spanish? If the caller asks for any other language, say it is not supported and offer English, Spanish, or a follow-up from Alex Rivera.\n\nKeep the same inquiry when the language changes. Do not create a second request, do not repeat a tool, and do not restart booking.\n\nCollect the issue, name, callback number, email, and service address. Read emails, phone numbers, and addresses back exactly. Do not translate street names or change prices or currency. Money is always USD with a dollar sign, for example $89.00 and $225.00.\n\nService area: Port St. Lucie, Tradition, and St. Lucie West only. Hours: Monday–Friday 8:00 a.m.–6:00 p.m., Saturday 9:00 a.m.–1:00 p.m. Eastern Time. Closed Sunday. After hours, collect details and request owner follow-up. Never promise emergency dispatch. If there is gas, smoke, sparks, or another danger, tell the caller to contact emergency services and do not give repair steps.\n\nUse tools for business actions. Never invent a price. The price book is authoritative:\n\n- Diagnostic visit: $89.00.\n- Accessible under-sink shutoff-valve replacement: $225.00, only if the technician confirms that scope. The $89.00 diagnostic fee is credited, so the demo subtotal is $225.00.\n- HVAC maintenance visit: $129.00.\n- Electrical panel, EV charger, and construction work require inspection before a firm quote.\n\nA photo does not confirm a diagnosis or a price. Distinguish an estimate, an approved fixed-price service, and work that needs inspection.\n\nTechnicians Morgan Chen, Sam Brooks, and Taylor Reed conduct visits in English. Do not say a technician speaks Spanish. Office follow-up can continue in Spanish.\n\nOffer a continuation link when the caller wants to upload a photo or finish later. Sending it does not end the call. Book only after check_availability and a second check inside book_appointment. Announce a time only after the tool succeeds. Say the weekday, date, time, and Eastern Time. If booking fails, say it is not confirmed and offer follow-up.\n\nThe caller cannot mark work complete or approve an invoice.\n",
-        "built_in_tools": {
-          "language_detection": {
+        "llm": "claude-haiku-4-5",
+        "tools": [
+          {
+            "type": "webhook",
+            "name": "save_customer_details",
+            "description": "Save what the caller has told you. Call whenever you learn a new detail. Send only fields you heard. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/save_customer_details",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Caller's full name"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Callback number"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "Email address, spelled back and confirmed"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Service address including city"
+                  },
+                  "issue": {
+                    "type": "string",
+                    "description": "Short English summary of the problem"
+                  },
+                  "service_code": {
+                    "type": "string",
+                    "description": "Service code from the catalog. Use the code, not the spoken name.",
+                    "enum": [
+                      "DIAG",
+                      "VALVE_SHUTOFF",
+                      "FAUCET",
+                      "WATER_HEATER_DIAG",
+                      "DRAIN_ACCESS",
+                      "HVAC_MAINT",
+                      "HVAC_DIAG",
+                      "ELEC_DIAG",
+                      "PANEL_INSPECT",
+                      "EV_INSPECT",
+                      "CONSTRUCTION_INSPECT"
+                    ]
+                  },
+                  "preferred_language": {
+                    "type": "string",
+                    "description": "Language the caller prefers",
+                    "enum": [
+                      "en",
+                      "es"
+                    ]
+                  }
+                },
+                "required": [
+                  "inquiry_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "webhook",
+            "name": "lookup_service_info",
+            "description": "Look up what a service includes, its assumptions, and its demo price before describing it. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/lookup_service_info",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "service_code": {
+                    "type": "string",
+                    "description": "Service code from the catalog. Use the code, not the spoken name.",
+                    "enum": [
+                      "DIAG",
+                      "VALVE_SHUTOFF",
+                      "FAUCET",
+                      "WATER_HEATER_DIAG",
+                      "DRAIN_ACCESS",
+                      "HVAC_MAINT",
+                      "HVAC_DIAG",
+                      "ELEC_DIAG",
+                      "PANEL_INSPECT",
+                      "EV_INSPECT",
+                      "CONSTRUCTION_INSPECT"
+                    ]
+                  }
+                },
+                "required": [
+                  "inquiry_id",
+                  "service_code"
+                ]
+              }
+            }
+          },
+          {
+            "type": "webhook",
+            "name": "calculate_estimate",
+            "description": "Get the demo estimate for a service. Quote only the figures this returns. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/calculate_estimate",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "service_code": {
+                    "type": "string",
+                    "description": "Service code from the catalog. Use the code, not the spoken name.",
+                    "enum": [
+                      "DIAG",
+                      "VALVE_SHUTOFF",
+                      "FAUCET",
+                      "WATER_HEATER_DIAG",
+                      "DRAIN_ACCESS",
+                      "HVAC_MAINT",
+                      "HVAC_DIAG",
+                      "ELEC_DIAG",
+                      "PANEL_INSPECT",
+                      "EV_INSPECT",
+                      "CONSTRUCTION_INSPECT"
+                    ]
+                  }
+                },
+                "required": [
+                  "inquiry_id",
+                  "service_code"
+                ]
+              }
+            }
+          },
+          {
+            "type": "webhook",
+            "name": "send_continuation_link",
+            "description": "Email the caller a link to upload photos or finish later. The call continues. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/send_continuation_link",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "Confirmed email address"
+                  }
+                },
+                "required": [
+                  "inquiry_id",
+                  "email"
+                ]
+              }
+            }
+          },
+          {
+            "type": "webhook",
+            "name": "check_availability",
+            "description": "List open appointment slots for a service. Offer only slots this returns. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/check_availability",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "service_code": {
+                    "type": "string",
+                    "description": "Service code from the catalog. Use the code, not the spoken name.",
+                    "enum": [
+                      "DIAG",
+                      "VALVE_SHUTOFF",
+                      "FAUCET",
+                      "WATER_HEATER_DIAG",
+                      "DRAIN_ACCESS",
+                      "HVAC_MAINT",
+                      "HVAC_DIAG",
+                      "ELEC_DIAG",
+                      "PANEL_INSPECT",
+                      "EV_INSPECT",
+                      "CONSTRUCTION_INSPECT"
+                    ]
+                  }
+                },
+                "required": [
+                  "inquiry_id",
+                  "service_code"
+                ]
+              }
+            }
+          },
+          {
+            "type": "webhook",
+            "name": "book_appointment",
+            "description": "Book a slot returned by check_availability. Announce the time only if this succeeds. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/book_appointment",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "starts_at": {
+                    "type": "string",
+                    "description": "The slot's start value exactly as check_availability returned it (ISO 8601)"
+                  },
+                  "service_code": {
+                    "type": "string",
+                    "description": "Service code from the catalog. Use the code, not the spoken name.",
+                    "enum": [
+                      "DIAG",
+                      "VALVE_SHUTOFF",
+                      "FAUCET",
+                      "WATER_HEATER_DIAG",
+                      "DRAIN_ACCESS",
+                      "HVAC_MAINT",
+                      "HVAC_DIAG",
+                      "ELEC_DIAG",
+                      "PANEL_INSPECT",
+                      "EV_INSPECT",
+                      "CONSTRUCTION_INSPECT"
+                    ]
+                  }
+                },
+                "required": [
+                  "inquiry_id",
+                  "starts_at",
+                  "service_code"
+                ]
+              }
+            }
+          },
+          {
+            "type": "webhook",
+            "name": "request_human_followup",
+            "description": "Ask the office to call back when you cannot help or the caller asks for a person. Arguments stay in English field names in every spoken language.",
+            "api_schema": {
+              "url": "https://phone-demo.magro.dev/api/tools/request_human_followup",
+              "method": "POST",
+              "request_headers": {
+                "x-tool-secret": {
+                  "secret_id": "3wqvMJgr8ASZxf1RVLiD"
+                }
+              },
+              "request_body_schema": {
+                "type": "object",
+                "properties": {
+                  "inquiry_id": {
+                    "type": "string",
+                    "dynamic_variable": "inquiry_id"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Short English reason"
+                  }
+                },
+                "required": [
+                  "inquiry_id",
+                  "reason"
+                ]
+              }
+            }
+          },
+          {
+            "type": "system",
+            "name": "end_call",
+            "description": "Hang up after the caller says goodbye.",
+            "params": {
+              "system_tool_type": "end_call"
+            }
+          },
+          {
+            "type": "system",
             "name": "language_detection",
-            "description": "Switch only between English (en) and Spanish (es). Switch when the caller is clearly speaking that language or explicitly asks to switch. Do not switch because of a name, a street, one borrowed word, or silence. If unsure, ask whether they prefer English or Spanish. If they ask for another language, say only English and Spanish are available and offer those or a human follow-up. Never start a new inquiry or repeat a tool call because the language changed.",
+            "description": "Switch only between English (en) and Spanish (es). Switch when the caller is clearly speaking that language or explicitly asks to switch. Do not switch because of a name, a street, one borrowed word, or silence. If unsure, ask whether they prefer English or Spanish.",
             "params": {
               "system_tool_type": "language_detection",
               "only_at_conversation_start": false
             }
           }
-        }
+        ]
       }
     },
     "language_presets": {
@@ -24,116 +358,19 @@
           "agent": {
             "first_message": "Gracias por llamar a Palmetto Coast Home Services. Soy el asistente de inteligencia artificial y esta llamada se transcribe. Puedo ayudarle en español.",
             "language": "es"
+          },
+          "tts": {
+            "model_id": "eleven_flash_v2_5"
           }
         }
       }
     },
     "tts": {
-      "model_id": "eleven_turbo_v2_5",
+      "model_id": "eleven_flash_v2",
       "agent_output_audio_format": "ulaw_8000"
     },
     "asr": {
       "user_input_audio_format": "ulaw_8000"
     }
-  },
-  "tools": [
-    {
-      "name": "palmetto_save_customer_details",
-      "description": "Palmetto Coast demo tool save_customer_details. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/save_customer_details",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    },
-    {
-      "name": "palmetto_lookup_service_info",
-      "description": "Palmetto Coast demo tool lookup_service_info. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/lookup_service_info",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    },
-    {
-      "name": "palmetto_calculate_estimate",
-      "description": "Palmetto Coast demo tool calculate_estimate. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/calculate_estimate",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    },
-    {
-      "name": "palmetto_send_continuation_link",
-      "description": "Palmetto Coast demo tool send_continuation_link. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/send_continuation_link",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    },
-    {
-      "name": "palmetto_check_availability",
-      "description": "Palmetto Coast demo tool check_availability. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/check_availability",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    },
-    {
-      "name": "palmetto_book_appointment",
-      "description": "Palmetto Coast demo tool book_appointment. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/book_appointment",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    },
-    {
-      "name": "palmetto_request_human_followup",
-      "description": "Palmetto Coast demo tool request_human_followup. Arguments and results stay in English field names in every spoken language.",
-      "type": "webhook",
-      "api_schema": {
-        "url": "http://localhost:3000/api/tools/request_human_followup",
-        "method": "POST",
-        "request_headers": {
-          "x-tool-secret": {
-            "variable": "TOOL_WEBHOOK_SECRET"
-          }
-        }
-      }
-    }
-  ]
+  }
 }

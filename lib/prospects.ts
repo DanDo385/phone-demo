@@ -80,13 +80,13 @@ export function catalogRecords(): Prospect[] {
 }
 
 export function ensureProspects(): void {
-  const count = get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects");
+  const count = get<{ n: number }>("SELECT COUNT(*) AS n FROM outreach_companies");
   if ((count?.n ?? 0) > 0) return;
   const rows = catalogRecords();
   transaction(() => {
     for (const row of rows) {
       run(
-        `INSERT INTO prospects(id, name, trade, city, phone, email, website, notes, answers_own_phone, chain, spanish)
+        `INSERT INTO outreach_companies(id, name, trade, city, phone, email, website, notes, answers_own_phone, chain, spanish)
          VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         row.id,
         row.name,
@@ -106,8 +106,8 @@ export function ensureProspects(): void {
 
 export function prospectCounts(): { total: number; withoutWebsite: number } {
   ensureProspects();
-  const total = Number(get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects")?.n ?? 0);
-  const withoutWebsite = Number(get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE website IS NULL OR website = ''")?.n ?? 0);
+  const total = Number(get<{ n: number }>("SELECT COUNT(*) AS n FROM outreach_companies")?.n ?? 0);
+  const withoutWebsite = Number(get<{ n: number }>("SELECT COUNT(*) AS n FROM outreach_companies WHERE website IS NULL OR website = ''")?.n ?? 0);
   return { total, withoutWebsite };
 }
 
@@ -115,7 +115,7 @@ function withoutWebsite(): Prospect[] {
   ensureProspects();
   return all<Prospect>(
     `SELECT id, name, trade, city, phone, email, website, notes, answers_own_phone, chain, spanish
-     FROM prospects WHERE website IS NULL OR website = '' ORDER BY id`,
+     FROM outreach_companies WHERE website IS NULL OR website = '' ORDER BY id`,
   );
 }
 
@@ -181,7 +181,7 @@ export function matchLabel(probability: number | null): string | null {
 export async function rankProspects(query: string, options?: { maxOptions?: number }): Promise<ProspectRank> {
   const cleaned = query.trim().slice(0, 280) || DEFAULT_OUTREACH_QUERY;
   const allRows = withoutWebsite();
-  const total = Number(get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects")?.n ?? 0);
+  const total = Number(get<{ n: number }>("SELECT COUNT(*) AS n FROM outreach_companies")?.n ?? 0);
   const limit = options?.maxOptions ?? CHOICE_LIMIT;
   const narrowed = allRows.length > limit;
   const pool = narrowed ? byRules(allRows, cleaned).slice(0, limit) : allRows;

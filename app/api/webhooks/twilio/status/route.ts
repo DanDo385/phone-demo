@@ -3,6 +3,7 @@ import { boot } from "@/lib/http";
 import { addTimeline, nowIso } from "@/lib/records";
 import { get } from "@/lib/db";
 import { verifyTwilioSignature } from "@/lib/webhooks";
+import { finalizeCall } from "@/lib/prospect/pipeline";
 
 export async function POST(request: Request) {
   boot();
@@ -24,6 +25,10 @@ export async function POST(request: Request) {
     if (call?.inquiry_id) {
       addTimeline({ inquiryId: call.inquiry_id, kind: "call_status", title: `Call ${params.CallStatus || "updated"}`, sourceKind: "live" });
     }
+  }
+  if (callSid && ["completed", "busy", "failed", "no-answer", "canceled"].includes(params.CallStatus || "")) {
+    const prospectCall = get<{ id: string }>("SELECT id FROM prospect_calls WHERE call_sid = ?", callSid);
+    if (prospectCall) void finalizeCall(prospectCall.id);
   }
   return new Response("ok");
 }
