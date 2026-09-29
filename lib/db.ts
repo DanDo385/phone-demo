@@ -353,6 +353,11 @@ CREATE TABLE IF NOT EXISTS prospects (
   qualification_json TEXT,
   place_id TEXT,
   place_confirmed INTEGER NOT NULL DEFAULT 0,
+  source TEXT NOT NULL DEFAULT 'try',
+  business_name TEXT,
+  intake_json TEXT,
+  notify_status TEXT,
+  idempotency_key TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -494,6 +499,14 @@ const PROSPECT_COLUMNS: Array<[string, string]> = [
   ["qualification_json", "TEXT"],
   ["place_id", "TEXT"],
   ["place_confirmed", "INTEGER NOT NULL DEFAULT 0"],
+  // Where the prospect came from: 'try' (analyzer) or 'founding' (founding-access form).
+  ["source", "TEXT NOT NULL DEFAULT 'try'"],
+  ["business_name", "TEXT"],
+  // Free-text answers from an intake form, as typed.
+  ["intake_json", "TEXT"],
+  // Staff notification: simulated, sent, or failed.
+  ["notify_status", "TEXT"],
+  ["idempotency_key", "TEXT"],
 ];
 
 function columns(db: Sql, table: string): string[] {
@@ -507,6 +520,7 @@ function addMissingColumns(db: Sql): void {
     if (!prospectCols.includes(name)) db.exec(`ALTER TABLE prospects ADD COLUMN ${name} ${type}`);
   }
   db.exec("CREATE INDEX IF NOT EXISTS prospects_lead_status ON prospects(lead_status, updated_at)");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS prospects_idem ON prospects(idempotency_key) WHERE idempotency_key IS NOT NULL");
 }
 
 export function getDb(): Sql {

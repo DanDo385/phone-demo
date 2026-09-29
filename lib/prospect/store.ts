@@ -4,7 +4,8 @@ import { nowIso } from "../records";
 import type { Analysis } from "./schema";
 import type { PlaceProfile, SiteScrape } from "./sources";
 
-export type ProspectStatus = "analyzing" | "ready" | "failed";
+// "intake" rows come from the founding form and are never analyzed.
+export type ProspectStatus = "analyzing" | "ready" | "failed" | "intake";
 
 export type ProspectRow = {
   id: string;
@@ -91,7 +92,7 @@ export function sourcesOf(row: ProspectRow | undefined): { site: SiteScrape; pla
 }
 
 export function recentAnalysesFromIp(ip: string, sinceIso: string): number {
-  return get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE client_ip = ? AND created_at >= ?", ip, sinceIso)?.n ?? 0;
+  return get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE source = 'try' AND client_ip = ? AND created_at >= ?", ip, sinceIso)?.n ?? 0;
 }
 
 // Caller ID first; otherwise the most recent ready prospect from the last 15 minutes.

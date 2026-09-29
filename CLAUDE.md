@@ -33,13 +33,15 @@ Practical, calm, operational. Never market "AI automation." Market fewer missed 
 
 ## Repo conventions
 
-**Layout.** `app/(marketing)` is the public site and `app/(demo)` holds the demo surfaces: the fictional Palmetto Coast screens (`/demo`, `/call`, `/c`, `/review`, `/renew`, `/login`, `/dashboard`) and the prospect demo (`/try`). Each group has its own root layout and there is no `app/layout.tsx`. `app/api` sits outside both groups. When a URL moves, add it to `redirects.mjs`; `tests/routes.test.ts` fails if a redirect points at nothing or shadows a page. Palmetto copy lives in `lib/business.ts`, `lib/copy.ts`, and `agent/`. Docent copy reads `lib/brand.ts`.
+**Layout.** `app/(marketing)` is the public site and `app/(demo)` holds the demo surfaces: the fictional Palmetto Coast screens (`/demo`, `/call`, `/c`, `/review`, `/renew`, `/login`, `/dashboard`) and the prospect demo (`/try`). Each group has its own root layout and there is no `app/layout.tsx`. `app/api` sits outside both groups. When a URL moves, add it to `redirects.mjs`; `tests/routes.test.ts` fails if a redirect points at nothing or shadows a page. Palmetto copy lives in `lib/business.ts`, `lib/copy.ts`, and `agent/`. Public-site copy lives in `content/` (consent wording in `content/consent.ts`), separate from `components/marketing/`, and reads names and prices from `lib/brand.ts`; `tests/brand.test.ts` fails on a hardcoded brand name or price. `node scripts/check-marketing.mjs` checks every public route at 375px against a running server.
 
 **Simulated vs live.** Every integration (ElevenLabs, Twilio, AgentMail, Google Calendar, Jev) runs live only when its credentials are present (`envPresent` in `lib/providers/status.ts`). Otherwise it runs simulated and says so in the UI. Rows carry `source_kind` (`live`, `post_call`, `simulated`, `simulated_replay`) so simulated data is never shown as real. A missing key means simulated mode, not an error.
 
 **Never show a failed send as delivered.** Delivery results are `simulated`, `sent`, or `failed` with the reason (`lib/providers/agentmail.ts`). A failed Google insert leaves the appointment unconfirmed. The UI and emails report the stored status. Do not add an optimistic "sent" or "booked".
 
 **Recipient guards.** Palmetto customer email goes through `deliverEmail`. It sends for real only when AgentMail is configured and the recipient equals `TEST_CUSTOMER_EMAIL`; any other address is `failed`, not sent. `sendAgentMail` is the raw send and does not choose recipients. Prospect mail (`lib/prospect/emails.ts`) goes only to the address the prospect typed, at most once per report and once per call. Recording stays off unless `RECORD_CALLS=true`.
+
+**Consent and forms.** Consent wording is versioned from its own text (`content/consent.ts`); the server rejects a stale version and stores the exact text with `recordConsent`. Public forms that spend money or send mail check Turnstile (`lib/turnstile.ts`: skipped without a key outside production, refused in production), rate-limit per IP, and honor `DEMO_KILL_SWITCH`. Events go through `track()` (`lib/track.ts`) with no personal data in props.
 
 **Retryable writes.** Tool calls, emails, scheduled jobs, and walkthrough bookings use a unique `idempotency_key`. Webhooks dedupe on `webhook_receipts(provider, event_id)`. A replayed write returns the first result.
 
