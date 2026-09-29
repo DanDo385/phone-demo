@@ -13,7 +13,7 @@ npm test
 npm run dev
 ```
 
-Then open http://localhost:3000/demo (the Palmetto lobby; `/` redirects there until the public site lands).
+Then open http://localhost:3000/demo for the Palmetto lobby. It moved from `/`, which is now the public homepage (see `redirects.mjs`).
 
 - Dashboard: sign in as `alex.rivera@palmetto-coast.demo` / `palmetto-demo`
 - Phone: http://localhost:3000/call

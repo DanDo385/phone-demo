@@ -175,7 +175,7 @@ Test the restore on a scratch host before launch. A backup that has never been r
 
 ## Checks after a deploy
 
-- `curl -sI https://<domain>/demo` returns 200, and `/` redirects according to `redirects.mjs`.
+- `curl -sI https://<domain>/` and `https://<domain>/demo` return 200 (the public homepage and the Palmetto lobby).
 - `curl -s https://<domain>/voice/health` returns 404. Only `/voice/twilio` and `/voice/prewarm` are public.
 - `journalctl -u docent-litestream -n 50` shows replication with no errors. `litestream ltx -config /etc/docent/litestream.yml /var/lib/docent/data/palmetto.sqlite` lists recent files.
 - `systemctl list-timers docent-files-backup.timer` shows the next run.

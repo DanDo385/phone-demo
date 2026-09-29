@@ -45,6 +45,15 @@ describe("route groups", () => {
     }
   });
 
+  it("serves the public site from (marketing)", () => {
+    const urls = ["/", "/scribe", "/squire", "/pricing", "/ownership", "/faq", "/research", "/founding", "/book", "/legal/privacy", "/legal/terms"];
+    for (const url of urls) {
+      const file = resolve(url, table);
+      expect(file, url).toBeDefined();
+      expect(file!.startsWith("(marketing)/"), `${url} -> ${file}`).toBe(true);
+    }
+  });
+
   it("gives each group its own root layout", () => {
     expect(fs.existsSync(path.join(APP, "(demo)", "layout.tsx"))).toBe(true);
     expect(fs.existsSync(path.join(APP, "(marketing)", "layout.tsx"))).toBe(true);
