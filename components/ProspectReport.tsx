@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProspectView } from "@/lib/prospect/view";
+import { brand } from "@/lib/brand";
 
 const STAGES = [
   { id: "reading_website", label: "Reading your website" },
@@ -154,7 +155,7 @@ export default function ProspectReport({ id }: { id: string }) {
     return (
       <main className="try-wrap">
         <div className="try-brand">
-          <span className="try-dot" /> AI Receptionist Demo
+          <span className="try-dot" /> {brand.company.name} demo
         </div>
         <h1>{view.status === "failed" ? "We couldn't build this demo." : "Building your receptionist…"}</h1>
         <p className="try-sub">{view.website}</p>
@@ -186,7 +187,7 @@ export default function ProspectReport({ id }: { id: string }) {
   return (
     <main className="try-wrap">
       <div className="try-brand">
-        <span className="try-dot" /> AI Receptionist Demo
+        <span className="try-dot" /> {brand.company.name} demo
       </div>
       <h1>{b.name}</h1>
       <p className="try-lede">{b.tagline}</p>

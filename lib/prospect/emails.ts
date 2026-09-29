@@ -1,3 +1,4 @@
+import { brand } from "../brand";
 import { appBaseUrl } from "../ids";
 import { sendAgentMail } from "../providers/agentmail";
 import type { Analysis } from "./schema";
@@ -13,7 +14,7 @@ function esc(value: string): string {
 function page(title: string, inner: string): string {
   return `<div style="font-family:Helvetica,Arial,sans-serif;max-width:640px;margin:0 auto;color:#14241c">
 <h2 style="margin:0 0 12px">${esc(title)}</h2>${inner}
-<p style="color:#6d6458;font-size:12px;margin-top:24px">Demo generated from your public website and Google Business Profile. Details marked as filled in were invented so the demo call works.</p></div>`;
+<p style="color:#6d6458;font-size:12px;margin-top:24px">A demo ${esc(brand.company.name)} built from your public website and Google Business Profile. Details marked as filled in were invented so the demo call works.</p></div>`;
 }
 
 export async function sendReportEmail(prospect: ProspectRow, analysis: Analysis) {

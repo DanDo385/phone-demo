@@ -13,7 +13,7 @@ npm test
 npm run dev
 ```
 
-Then open http://localhost:3000.
+Then open http://localhost:3000/demo (the Palmetto lobby; `/` redirects there until the public site lands).
 
 - Dashboard: sign in as `alex.rivera@palmetto-coast.demo` / `palmetto-demo`
 - Phone: http://localhost:3000/call
@@ -21,6 +21,9 @@ Then open http://localhost:3000.
 - Customer lines: `docs/SAMPLE_SCRIPTS.md`
 - Credentials: `docs/INTEGRATION_CHECKLIST.md` and `docs/SETUP.md`
 - What was actually tested: `docs/CAPABILITIES.md`
+- Repo rules for Docent Solutions (brand, offer, consent, hard rules): `CLAUDE.md`; brand values: `lib/brand.ts`
+- Route groups: `app/(marketing)` (public site) and `app/(demo)` (this demo and `/try`); moved URLs: `redirects.mjs`
+- Production (one US-East VPS): `deploy/README.md`
 
 ## What the demo covers
 

@@ -1,0 +1,61 @@
+# /etc/caddy/Caddyfile. Caddy obtains and renews TLS certificates automatically once DNS
+# for the domain points at this host and ports 80/443 are open.
+#
+# SITE_DOMAIN comes from /etc/default/caddy and must equal brand.domain in lib/brand.ts
+# (names are pending clearance, so the domain is not written here).
+{
+	email ops@{$SITE_DOMAIN}
+}
+
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(), geolocation=(), microphone=(self)"
+		-Server
+	}
+
+	# Voice service: Twilio Media Streams websocket (wss://<domain>/voice/twilio) and the
+	# bearer-protected greeting prewarm the app derives from VOICE_STREAM_URL. Nothing else
+	# on the voice service is public.
+	@voice path /voice/twilio /voice/prewarm
+	handle @voice {
+		uri strip_prefix /voice
+		reverse_proxy 127.0.0.1:8765
+	}
+	handle /voice/* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000 {
+			# No CDN sits in front of this host, so a client-sent CF-Connecting-IP is forged.
+			# app/api/prospects/route.ts reads it before X-Forwarded-For (which Caddy sets
+			# from the real peer address), so strip it or per-IP limits can be bypassed.
+			header_up -Cf-Connecting-Ip
+			# Server-sent events on /try/<id> must not be buffered.
+			flush_interval -1
+		}
+	}
+
+	log {
+		output file /var/log/caddy/docent.access.log {
+			roll_size 50MiB
+			roll_keep 10
+		}
+		# Continuation, review, and prospect-demo links carry bearer tokens in the path.
+		format filter {
+			request>uri regexp "^/(c|review|try|api/customer|api/review|api/prospects)/[^/?]+" "/$1/REDACTED"
+			request>headers>Cookie delete
+			request>headers>Authorization delete
+		}
+	}
+}

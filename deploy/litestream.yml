@@ -1,0 +1,24 @@
+# Litestream config for /etc/docent/litestream.yml (Litestream 0.5.x format; checked against
+# 0.5.17). ${VAR} values are expanded from the environment `op run` provides
+# (docent-litestream.service); the key pair comes from LITESTREAM_ACCESS_KEY_ID and
+# LITESTREAM_SECRET_ACCESS_KEY, which Litestream reads by default.
+#
+# Litestream ignores unknown keys, so check the parsed result after any edit:
+#   sudo -u docent op run --env-file=/etc/docent/litestream.env.tpl -- litestream databases -config /etc/docent/litestream.yml
+#
+# Only the SQLite database is here. recordings/, attachments/, and invoices/ are plain files
+# and go to the same bucket through deploy/backup-files.sh.
+
+snapshot:
+  interval: 24h
+  retention: 720h
+
+dbs:
+  - path: /var/lib/docent/data/palmetto.sqlite
+    replica:
+      type: s3
+      bucket: ${LITESTREAM_BUCKET}
+      path: ${LITESTREAM_PATH}/db/palmetto.sqlite
+      endpoint: ${LITESTREAM_ENDPOINT}
+      region: ${LITESTREAM_REGION}
+      sync-interval: 1s

@@ -56,7 +56,7 @@ await page.goto(`${base}/review/${review}?platform=google`);
 await page.getByRole("heading").waitFor();
 await page.screenshot({ path: new URL("06-review-preview-mobile.png", out).pathname, fullPage: true });
 await page.setViewportSize({ width: 1280, height: 900 });
-await page.goto(`${base}/`);
+await page.goto(`${base}/demo`);
 await page.screenshot({ path: new URL("07-home.png", out).pathname, fullPage: true });
 console.log(JSON.stringify({ inquiryId, errors, stages: view.stages.map((s) => s.status) }));
 await browser.close();

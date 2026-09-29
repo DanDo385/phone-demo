@@ -14,7 +14,7 @@ npm run dev              # reads the mounted .env
 project-env npm run dev  # same, injected by `op run --environment` (use when .env is not mounted)
 ```
 
-Open http://localhost:3000. Sign in as `alex.rivera@palmetto-coast.demo` with `DEMO_OWNER_PASSWORD`
+Open http://localhost:3000/demo. Sign in as `alex.rivera@palmetto-coast.demo` with `DEMO_OWNER_PASSWORD`
 (Phone Demo item → `owner_password`).
 
 The database is created at `data/palmetto.sqlite` and seeded on first boot. Reset it by deleting that file.

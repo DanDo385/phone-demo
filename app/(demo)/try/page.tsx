@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { brand } from "@/lib/brand";
 
 export default function TryIntake() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function TryIntake() {
   return (
     <main className="try-wrap">
       <div className="try-brand">
-        <span className="try-dot" /> AI Receptionist Demo
+        <span className="try-dot" /> {brand.company.name} demo
       </div>
       <h1>Hear an AI receptionist answer as your business.</h1>
       <p className="try-lede">
