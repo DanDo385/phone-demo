@@ -10,3 +10,6 @@ tsconfig.tsbuildinfo
 playwright-report
 test-results
 .vercel
+
+# Internal launch plan (kept local; the repo is public)
+docs/docent-solutions-launch-plan.pdf
