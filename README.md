@@ -1,6 +1,8 @@
-# Palmetto Coast Home Services — fictional receptionist demo
+# Docent Solutions
 
-A working demo of a multilingual AI receptionist and follow-up flow for independent contractors. The business, customers, prices, and reviews are fictional.
+Public site and operations foundation for a managed website, a receptionist, and a job-to-marketing workflow. Prices stay as "Request a tailored proposal" until commercial terms are set in `lib/brand.ts`.
+
+Demonstrations use fictional businesses. An older fictional sample still exists in the operations screens and the local database. It is not linked from the sales site. Its records are not deleted.
 
 The owner watches a six-stage dashboard. The presenter uses a phone for browser voice or a continuation link. Without ElevenLabs, Twilio, AgentMail, Google Calendar, or Supabase credentials, the same workflow runs in **simulated** mode and says so. It does not pretend a failed send was delivered.
 
@@ -13,7 +15,7 @@ npm test
 npm run dev
 ```
 
-Then open http://localhost:3000/demo for the Palmetto lobby. It moved from `/`, which is now the public homepage (see `redirects.mjs`).
+Then open http://localhost:3000/ for the sales site. `/examples` is the fictional receptionist and job. `/demo` redirects there.
 
 - Dashboard: sign in as `alex.rivera@palmetto-coast.demo` / `palmetto-demo`
 - Phone: http://localhost:3000/call

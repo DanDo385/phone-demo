@@ -13,7 +13,8 @@
     "setup:elevenlabs": "tsx scripts/setup-elevenlabs.ts",
     "screenshot": "node scripts/screenshot.mjs",
     "setup:google": "tsx scripts/setup-google.ts",
-    "setup:prospect-agent": "tsx scripts/setup-prospect-agent.ts"
+    "setup:prospect-agent": "tsx scripts/setup-prospect-agent.ts",
+    "scribe": "tsx scripts/scribe.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

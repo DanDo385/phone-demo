@@ -99,7 +99,7 @@ export function CallScreen({ elevenlabs }: { elevenlabs: boolean }) {
   return (
     <div className="phone">
       <div className="demo-flag">Fictional demo · browser voice</div>
-      <h1 className="wordmark" style={{ marginTop: 8 }}>Palmetto Coast</h1>
+      <h1 className="wordmark" style={{ marginTop: 8 }}>Earlier sample</h1>
       <p className="muted">{label}</p>
       <div className="seg" style={{ margin: "12px 0" }}>
         {(["auto", "en", "es"] as const).map((item) => (

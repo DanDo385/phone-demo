@@ -348,6 +348,7 @@ CREATE TABLE IF NOT EXISTS prospects (
   owner_name TEXT,
   role TEXT,
   trade TEXT,
+  service_area TEXT,
   utm_json TEXT,
   lead_status TEXT NOT NULL DEFAULT 'new' CHECK (lead_status IN ('new','contacted','walkthrough_booked','qualified','pilot','lost')),
   qualification_json TEXT,
@@ -362,6 +363,24 @@ CREATE TABLE IF NOT EXISTS prospects (
   updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS prospects_phone ON prospects(phone_e164, created_at);
+-- Short-lived permission to call Places after Turnstile. Holds place ids only.
+CREATE TABLE IF NOT EXISTS place_grants (
+  id TEXT PRIMARY KEY,
+  client_ip TEXT NOT NULL,
+  place_ids_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+-- Counts paid Places calls for the per-IP and per-place limits. No Places content.
+CREATE TABLE IF NOT EXISTS place_lookups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  client_ip TEXT NOT NULL,
+  place_id TEXT,
+  kind TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS place_lookups_ip ON place_lookups(kind, client_ip, created_at);
+CREATE INDEX IF NOT EXISTS place_lookups_place ON place_lookups(kind, place_id, created_at);
 CREATE TABLE IF NOT EXISTS prospect_calls (
   id TEXT PRIMARY KEY,
   prospect_id TEXT NOT NULL,
@@ -467,6 +486,209 @@ CREATE TABLE IF NOT EXISTS bookings_walkthrough (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS bookings_walkthrough_prospect ON bookings_walkthrough(prospect_id, starts_at);
+
+-- Public website assessments. Observations keep their source URL and collection time.
+CREATE TABLE IF NOT EXISTS upgrade_audits (
+  id TEXT PRIMARY KEY,
+  idempotency_key TEXT,
+  status TEXT NOT NULL,
+  website_url TEXT NOT NULL,
+  maps_url TEXT,
+  business_name TEXT,
+  industry TEXT,
+  goals_json TEXT NOT NULL DEFAULT '[]',
+  contact_email TEXT,
+  client_hash TEXT,
+  observations_json TEXT NOT NULL DEFAULT '[]',
+  findings_json TEXT NOT NULL DEFAULT '[]',
+  preview_json TEXT NOT NULL DEFAULT '{}',
+  profile_json TEXT NOT NULL DEFAULT '{}',
+  changes_json TEXT NOT NULL DEFAULT '[]',
+  error TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS upgrade_audits_idem ON upgrade_audits(idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS upgrade_audits_client ON upgrade_audits(client_hash, created_at);
+
+-- Tenant-scoped operations shared by voice, chat, the staff dashboard, the API, and the CLI.
+CREATE TABLE IF NOT EXISTS businesses (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  fictional INTEGER NOT NULL DEFAULT 0,
+  industry TEXT,
+  timezone TEXT NOT NULL DEFAULT 'America/New_York',
+  languages_json TEXT NOT NULL DEFAULT '["en","es"]',
+  languages_tested_json TEXT NOT NULL DEFAULT '[]',
+  review_url TEXT,
+  review_policy TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS customer_accounts (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS account_verifications (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  consumed_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS account_sessions (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_inquiries (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  customer_id TEXT,
+  channel TEXT NOT NULL,
+  status TEXT NOT NULL,
+  priority TEXT NOT NULL,
+  priority_reason TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  facts_json TEXT NOT NULL DEFAULT '{}',
+  language TEXT NOT NULL DEFAULT 'en',
+  stated_value_cents INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ops_inquiries_business ON ops_inquiries(business_id, created_at);
+CREATE TABLE IF NOT EXISTS ops_messages (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  inquiry_id TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  direction TEXT NOT NULL,
+  body TEXT NOT NULL,
+  delivery TEXT NOT NULL,
+  delivery_reason TEXT,
+  idempotency_key TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ops_messages_idem ON ops_messages(business_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE TABLE IF NOT EXISTS ops_files (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  inquiry_id TEXT,
+  job_id TEXT,
+  filename TEXT NOT NULL,
+  media_type TEXT NOT NULL,
+  bytes INTEGER NOT NULL,
+  storage_path TEXT NOT NULL,
+  permission TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_appointments (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  inquiry_id TEXT NOT NULL,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  status TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  provider_event_id TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(business_id, idempotency_key)
+);
+CREATE TABLE IF NOT EXISTS ops_jobs (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  inquiry_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_estimates (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  inquiry_id TEXT NOT NULL,
+  job_id TEXT,
+  status TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  amount_label TEXT,
+  illustrative INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_invoices (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  job_id TEXT,
+  external_ref TEXT NOT NULL,
+  amount_label TEXT NOT NULL,
+  status TEXT NOT NULL,
+  source_system TEXT NOT NULL,
+  illustrative INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_payments (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  invoice_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  source TEXT NOT NULL,
+  amount_label TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(business_id, idempotency_key)
+);
+CREATE TABLE IF NOT EXISTS ops_reviews (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  reminders_sent INTEGER NOT NULL DEFAULT 0,
+  reminder_limit INTEGER NOT NULL DEFAULT 2,
+  review_url TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_content (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  concept_json TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_publications (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  content_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  detail TEXT NOT NULL,
+  url TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ops_audit (
+  id TEXT PRIMARY KEY,
+  business_id TEXT NOT NULL,
+  actor TEXT NOT NULL,
+  action TEXT NOT NULL,
+  subject_type TEXT NOT NULL,
+  subject_id TEXT NOT NULL,
+  detail_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 `;
 
 type Sql = DatabaseSync;
@@ -492,6 +714,7 @@ const PROSPECT_COLUMNS: Array<[string, string]> = [
   ["owner_name", "TEXT"],
   ["role", "TEXT"],
   ["trade", "TEXT"],
+  ["service_area", "TEXT"],
   ["utm_json", "TEXT"],
   // `status` is the analysis pipeline (pending, ready, failed); this is the sales pipeline.
   ["lead_status", "TEXT NOT NULL DEFAULT 'new' CHECK (lead_status IN ('new','contacted','walkthrough_booked','qualified','pilot','lost'))"],
@@ -521,6 +744,8 @@ function addMissingColumns(db: Sql): void {
   }
   db.exec("CREATE INDEX IF NOT EXISTS prospects_lead_status ON prospects(lead_status, updated_at)");
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS prospects_idem ON prospects(idempotency_key) WHERE idempotency_key IS NOT NULL");
+  // place_id is added above on databases created before that column existed.
+  db.exec("CREATE INDEX IF NOT EXISTS prospects_place ON prospects(place_id, created_at)");
 }
 
 export function getDb(): Sql {

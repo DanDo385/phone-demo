@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AnalyzerEntry } from "@/components/AnalyzerEntry";
-import { JobJourneyDemo } from "@/components/JobJourneyDemo";
-import { Icon } from "@/components/marketing/Icon";
-import { PlanCards } from "@/components/marketing/PlanCards";
-import { TrackedLink } from "@/components/marketing/TrackedLink";
+import { ConsultForm } from "@/components/marketing/ConsultForm";
+import { OpportunityCalculator } from "@/components/marketing/OpportunityCalculator";
+import { ScribePreview } from "@/components/marketing/ScribePreview";
+import { SquirePreview } from "@/components/marketing/SquirePreview";
+import { UpgradeForm } from "@/components/marketing/UpgradeForm";
 import { home } from "@/content/marketing/home";
 import { cta } from "@/content/marketing/site";
+import { industries } from "@/content/marketing/timeline";
+import { brand, formatPrice, plans } from "@/lib/brand";
 
 export const metadata: Metadata = { title: home.meta.title, description: home.meta.description };
 
@@ -18,79 +20,104 @@ export default function HomePage() {
           <p className="m-eyebrow">{home.hero.eyebrow}</p>
           <h1>{home.hero.headline}</h1>
           <p className="m-lede">{home.hero.subhead}</p>
-          <AnalyzerEntry variant="hero" ctaLabel={cta.report.label} note={home.hero.reportNote} />
           <div className="m-cta-row">
-            <TrackedLink className="m-btn m-btn-secondary" href={cta.hearYourBusiness.href} event="cta_click" props={{ cta: "hear_your_business" }}>
-              <Icon name="phone" size={20} /> {cta.hearYourBusiness.label}
-            </TrackedLink>
-            <TrackedLink className="m-link" href={cta.demoBusiness.href} event="cta_click" props={{ cta: "demo_business" }}>
-              {cta.demoBusiness.label}
-            </TrackedLink>
+            <Link className="m-btn" href={cta.upgrade.href}>{cta.upgrade.label}</Link>
+            <Link className="m-btn m-btn-secondary" href={cta.receptionist.href}>{cta.receptionist.label}</Link>
           </div>
         </div>
       </section>
 
-      <section className="m-section" aria-labelledby="problem">
+      <section className="m-section" aria-labelledby="upgrade-heading">
+        <div className="m-wrap m-split">
+          <div>
+            <h2 id="upgrade-heading">{home.upgrade.heading}</h2>
+            <p>{home.upgrade.body}</p>
+          </div>
+          <UpgradeForm />
+        </div>
+      </section>
+
+      <section className="m-section m-section-alt" aria-labelledby="scribe-heading">
         <div className="m-wrap">
-          <h2 id="problem">{home.problem.heading}</h2>
+          <h2 id="scribe-heading">{home.scribe.heading}</h2>
+          <p>{home.scribe.body}</p>
+          <ScribePreview product={brand.products.scribe} />
+          <p className="m-fine"><span className="m-tag">Sample</span> {home.scribe.caption}</p>
+        </div>
+      </section>
+
+      <section className="m-section" aria-labelledby="squire-heading">
+        <div className="m-wrap">
+          <h2 id="squire-heading">{home.squire.heading}</h2>
+          <p>{home.squire.body}</p>
+          <SquirePreview />
+          <p className="m-fine"><span className="m-tag">Illustrative</span> {home.squire.caption}</p>
+        </div>
+      </section>
+
+      <section className="m-section m-section-alt" aria-labelledby="industries">
+        <div className="m-wrap">
+          <h2 id="industries">{home.industries.heading}</h2>
+          <p>{home.industries.body}</p>
           <ul className="m-grid-3" role="list">
-            {home.problem.points.map((p, i) => (
-              <li key={p.title} className="m-card">
-                <span className="m-icon"><Icon name={(["voicemail", "phone", "search"] as const)[i]} /></span>
-                <h3>{p.title}</h3>
-                <p>{p.body}</p>
+            {industries.map((item) => (
+              <li key={item.name} className="m-card"><h3>{item.name}</h3><p>{item.detail}</p></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="m-section" aria-labelledby="evidence">
+        <div className="m-wrap">
+          <h2 id="evidence">{home.evidence.heading}</h2>
+          <p>{home.evidence.sourceNote}</p>
+          <p><a href={home.evidence.sourceUrl}>{home.evidence.sourceName}</a></p>
+          <ul className="m-stats" role="list">
+            {home.evidence.stats.map((stat) => (
+              <li key={stat.value} className="m-card"><strong>{stat.value}</strong><span>{stat.label}</span></li>
+            ))}
+          </ul>
+          <p>{home.evidence.limit}</p>
+          <OpportunityCalculator />
+        </div>
+      </section>
+
+      <section className="m-section m-section-alt" aria-labelledby="compare">
+        <div className="m-wrap">
+          <h2 id="compare">{home.comparison.heading}</h2>
+          <p>{home.comparison.body}</p>
+          <ul className="m-plans" role="list">
+            {plans.map((item) => (
+              <li key={item.key} className="m-card m-plan">
+                <h3 className="m-plan-name">{item.name}</h3>
+                <p className="m-price">{formatPrice(item)}</p>
+                <p>{item.summary}</p>
               </li>
             ))}
           </ul>
+          <p className="m-cta-row"><Link href="/pricing">Compare what each service includes</Link></p>
         </div>
       </section>
 
-      <section className="m-section m-section-alt" aria-labelledby="value">
+      <section className="m-section" aria-labelledby="ownership">
+        <div className="m-wrap">
+          <h2 id="ownership">{home.ownership.heading}</h2>
+          <p className="m-promise-text">{home.ownership.promise}</p>
+          <ul className="m-bullets">
+            {home.ownership.points.map((point) => <li key={point}>{point}</li>)}
+          </ul>
+          <p><Link href="/ownership">How hosting, DNS, and handoff work</Link></p>
+        </div>
+      </section>
+
+      <section className="m-section m-section-alt" aria-labelledby="consult-heading">
         <div className="m-wrap m-split">
           <div>
-            <h2 id="value">{home.value.heading}</h2>
-            <p>{home.value.body}</p>
+            <h2 id="consult-heading">{home.consult.heading}</h2>
+            <p>{home.consult.body}</p>
+            <p className="m-fine">{cta.preview}</p>
           </div>
-          <ul className="m-checks m-checks-lg" role="list">
-            {home.value.points.map((p) => (
-              <li key={p}><Icon name="check" size={20} /> <span>{p}</span></li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="m-section" aria-labelledby="proof">
-        <div className="m-wrap">
-          <h2 id="proof">{home.proof.heading}</h2>
-          <p>{home.proof.body}</p>
-          <JobJourneyDemo label={home.proof.caption} />
-        </div>
-      </section>
-
-      <section className="m-section m-section-alt" aria-labelledby="offer">
-        <div className="m-wrap">
-          <h2 id="offer">{home.offer.heading}</h2>
-          <PlanCards compact />
-          <p className="m-founding-line">{home.offer.founding}</p>
-          <div className="m-card m-promise">
-            <span className="m-icon"><Icon name="key" /></span>
-            <div>
-              <h3>{home.offer.ownershipHeading}</h3>
-              <p>{home.offer.ownershipPromise}</p>
-              <Link href="/ownership">How ownership works</Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="m-section m-action" aria-labelledby="action">
-        <div className="m-wrap">
-          <h2 id="action">{home.action.heading}</h2>
-          <p>{home.action.body}</p>
-          <div className="m-cta-row">
-            <TrackedLink className="m-btn" href={cta.report.href} event="cta_click" props={{ cta: "report_footer" }}>{cta.report.label}</TrackedLink>
-            <TrackedLink className="m-btn m-btn-secondary" href={cta.walkthrough.href} event="cta_click" props={{ cta: "walkthrough" }}>{cta.walkthrough.label}</TrackedLink>
-          </div>
+          <ConsultForm />
         </div>
       </section>
     </>

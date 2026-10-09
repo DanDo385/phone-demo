@@ -7,12 +7,12 @@ export default function TryIntake() {
       <div className="try-brand">
         <span className="try-dot" /> {brand.company.name} demo
       </div>
-      <h1>Hear an AI receptionist answer as your business.</h1>
+      <h1>Hear your own business answer the phone.</h1>
       <p className="try-lede">
-        Enter your website and Google Business Profile. In about a minute you get a receptionist trained on your services,
-        a report of what callers can&apos;t find today, and a number to call.
+        Search for your business, confirm it&apos;s the right listing, then call a receptionist built from your public website
+        and Google profile. This is a demo built from public information.
       </p>
-      <AnalyzerEntry variant="full" />
+      <AnalyzerEntry />
     </main>
   );
 }

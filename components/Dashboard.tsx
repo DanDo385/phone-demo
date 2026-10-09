@@ -95,7 +95,7 @@ export function Dashboard({ inquiryId }: { inquiryId: string }) {
       <header className="topbar">
         <div>
           <div className="kicker">Fictional demo · Owner dashboard</div>
-          <div className="wordmark" style={{ fontSize: 28 }}>Palmetto Coast</div>
+          <div className="wordmark" style={{ fontSize: 28 }}>Earlier sample</div>
           <div className="muted">{OWNER.name} · {String(view.inquiry.id)}</div>
         </div>
         <div className="actions">

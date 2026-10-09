@@ -12,7 +12,7 @@ export function SiteHeader() {
           {nav.map((item) => (
             <Link key={item.href} href={item.href}>{item.label}</Link>
           ))}
-          <Link className="m-btn m-btn-small" href={cta.report.href}>Free report</Link>
+          <Link className="m-btn m-btn-small" href={cta.upgrade.href}>See an upgrade</Link>
         </nav>
         <details className="m-nav-narrow">
           <summary>Menu</summary>
@@ -20,7 +20,7 @@ export function SiteHeader() {
             {nav.map((item) => (
               <Link key={item.href} href={item.href}>{item.label}</Link>
             ))}
-            <Link href={cta.report.href}>Free report</Link>
+            <Link href={cta.upgrade.href}>See an upgrade</Link>
           </nav>
         </details>
       </div>

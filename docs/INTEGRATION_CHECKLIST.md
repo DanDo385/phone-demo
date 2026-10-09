@@ -1,5 +1,20 @@
 # Integration checklist
 
+The 2026-09-24 notes below are historical. This build did not place a carrier call, send a marketing email, buy a number, change DNS, or publish to a client profile.
+
+## This build (2026-10-02)
+
+| Area | State | What was exercised | Next action |
+| --- | --- | --- | --- |
+| Website assessment | Tested in the browser | `https://example.com` produced cited findings and a labeled sample preview. A request for `http://127.0.0.1:3012/` stored status failed, reason blocked, and did not invent page findings | Run an assessment for a prospect site you are allowed to read |
+| Website chat and workflow tools | Tested in the browser and in tests | On `/examples`: a website message stored as simulated, WhatsApp stored as failed, a file attached to the fictional job, Maya's invoice opened after a one-time code, Sam's session refused that invoice, and publishing an approved draft stayed blocked with no URL. Tests cover booking replay, overlap, and payment confirmation | Keep using `/examples` |
+| Phone, SMS, email, calendar | Simulated, or configured but untested if credentials are present | Adapters from the earlier sample remain. No new live call was placed | See `lib/channels.ts` for the exact next step |
+| WhatsApp, Messenger, Instagram, TikTok messages | Blocked | Documented alternatives are SMS and website chat | Platform app approval. TikTok messaging is separate from TikTok publishing |
+| Google profile edits | Blocked | A public URL is stored as a source and is not written back | Owner-authorized connection before any listing change |
+| fal and FFmpeg renders | Blocked or installed-but-untested | Draft concepts are stored. Generation is marked not run | Add `FAL_KEY` and run FFmpeg in a worker with a budget |
+| Payments | Simulated sample | Confirmation requires `provider_event` or `authorized_action` | Connect the business's accounting system of record |
+| Database | Local SQLite | New tables are additive in `lib/db.ts` | Hosted Postgres only if you choose to migrate |
+
 Checked on 2026-09-24 through the `phone-demo-dev` Environment with read-only API calls. No secret values are included.
 
 Credentials come from `.1password/project.toml` → Environment `phone-demo-dev`. See `docs/SETUP.md` → 1Password.

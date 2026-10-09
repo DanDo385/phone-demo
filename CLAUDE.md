@@ -1,20 +1,21 @@
 # Docent Solutions: repo rules
 
 ## Who we sell to
-Owners of HVAC and plumbing businesses with roughly 2-10 field employees around Port St. Lucie, FL. Owner-led sales, visible missed-call risk, weak or stale online presence. They read on phones, often in a truck.
+Service businesses with substantial inquiries: roofing, solar installation, remodeling, commercial construction, industrial services, and property management, plus plumbing and HVAC. Buyers include homeowners and commercial decision-makers. They often read on a phone.
 
 ## Voice
-Practical, calm, operational. Never market "AI automation." Market fewer missed jobs, faster follow-up, cleaner operations, a better local presence.
+Practical, calm, operational. Never market "AI automation." Market better visibility, faster response, and more booked business.
 
-## Offer (launch hypothesis; values live in lib/brand.ts, never hardcoded)
-- Scribe: $297/month. Voice + SMS/MMS intake, booking and job records, draft invoices + payment links, review-request workflow, website + Google profile improvement workflow, portal and reports.
-- Scribe + Squire: $497/month. Adds owned media library, post/blog/email drafts, short-form video, approval calendar, channel publishing adapters.
-- Custom: quoted. Setup fee + higher retainer.
-- Founding offer: first five qualified businesses get Scribe at $297, standard setup fee waived, Squire beta during the pilot, month-to-month.
-- Ownership promise: "You own the number, domain, data, listing, calendar, and merchant account. Docent operates them with revocable access."
+## Offer (labels and any future prices live in lib/brand.ts, never hardcoded)
+- Website and digital presence: managed site and listing work, available alone or bundled.
+- Scribe: receptionist and customer communication. Answers, qualifies, collects files, books, and hands work over.
+- Squire: workflow and marketing. Estimate through payment, a neutral review invitation, and content the owner approves.
+- Combined: all three.
+- Public pricing is "Request a tailored proposal" until `monthlyUsd` is set in lib/brand.ts. Do not invent a price.
+- Ownership promise: the client owns the number, domain, data, listing, calendar, and merchant account. The domain stays in the client's registrar account. Docent operates them with revocable access.
 
 ## Hard rules
-- Label every demo and every piece of sample data. Palmetto Coast is fictional. A prospect's personalized demo is labeled as a demo built from public information, and anything we filled in is marked as filled in.
+- Label every demo and every piece of sample data. Cedarline Roofing and Northmill Facilities are fictional. Older Palmetto Coast records may remain in the local database and are not the active product. A prospect's assessment is built from public pages, and anything filled in is marked as filled in.
 - No fabricated testimonials, logos, statistics, savings claims, or case studies. No "unlimited." No countdown timers; use "Founding access now open."
 - No stock photos of people presented as a real client, a prospect's staff, or Docent's team. Stock imagery in previews is labeled as a sample image.
 - The public site never asks for passwords, Google Workspace access, payment details, or domain credentials.

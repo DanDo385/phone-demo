@@ -3,12 +3,10 @@ import { brandCssVariables } from "@/lib/brand";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
-// Root layout for the demo surfaces: the fictional Palmetto Coast screens (/demo, /call,
-// /c, /review, /renew, /login, /dashboard) and the prospect demo (/try). Each page or
-// nested layout labels itself as a demo.
+// Operations screens and the prospect preview. The retired sample lobby redirects to /examples.
 export const metadata: Metadata = {
-  title: "Palmetto Coast — fictional receptionist demo",
-  description: "A fictional multilingual AI receptionist demo for independent contractors.",
+  title: "Operations",
+  description: "Staff screens and a fictional sample workflow.",
   robots: { index: false, follow: false },
 };
 

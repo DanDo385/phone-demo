@@ -98,6 +98,11 @@ export default function ProspectReport({ id }: { id: string }) {
     await session.current?.endSession();
   }
 
+  async function changeBusiness() {
+    await fetch(`/api/prospects/${id}/reopen`, { method: "POST" });
+    window.location.href = `/try?revise=${id}`;
+  }
+
   const gaps = useMemo(() => {
     const all = view?.analysis?.gaps ?? [];
     return gapTab === "all" ? all : all.filter((g) => g.source === gapTab);
@@ -151,6 +156,21 @@ export default function ProspectReport({ id }: { id: string }) {
   const a = view.analysis;
   const stageIndex = STAGES.findIndex((s) => s.id === view.stage);
 
+  if (view.status === "matched") {
+    return (
+      <main className="try-wrap">
+        <div className="try-brand">
+          <span className="try-dot" /> {brand.company.name} demo
+        </div>
+        <h1>Confirm your business</h1>
+        <p className="try-lede">The report waits until you confirm the Google listing.</p>
+        <p style={{ marginTop: 16 }}>
+          <a className="try-btn" href={`/try?revise=${view.id}`}>Choose the business</a>
+        </p>
+      </main>
+    );
+  }
+
   if (view.status !== "ready" || !a) {
     return (
       <main className="try-wrap">
@@ -162,19 +182,25 @@ export default function ProspectReport({ id }: { id: string }) {
         {view.status === "failed" ? (
           <>
             <div className="try-error" style={{ marginTop: 16 }}>{view.error}</div>
-            <p style={{ marginTop: 16 }}>
+            <p className="try-card-actions" style={{ marginTop: 16 }}>
               <a className="try-btn" href="/try">Try again</a>
+              <button className="try-btn ghost" type="button" onClick={changeBusiness}>Pick a different business</button>
             </p>
           </>
         ) : (
-          <ul className="try-steps">
-            {STAGES.map((s, i) => (
-              <li key={s.id} className={i < stageIndex ? "done" : i === stageIndex || (stageIndex < 0 && i === 0) ? "now" : ""}>
-                <span className="try-step-mark">{i < stageIndex ? "✓" : ""}</span>
-                {s.label}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="try-steps">
+              {STAGES.map((s, i) => (
+                <li key={s.id} className={i < stageIndex ? "done" : i === stageIndex || (stageIndex < 0 && i === 0) ? "now" : ""}>
+                  <span className="try-step-mark">{i < stageIndex ? "✓" : ""}</span>
+                  {s.label}
+                </li>
+              ))}
+            </ul>
+            <p style={{ marginTop: 16 }}>
+              <button className="try-btn ghost" type="button" onClick={changeBusiness}>Pick a different business</button>
+            </p>
+          </>
         )}
       </main>
     );
@@ -191,6 +217,9 @@ export default function ProspectReport({ id }: { id: string }) {
       </div>
       <h1>{b.name}</h1>
       <p className="try-lede">{b.tagline}</p>
+      <p>
+        <button className="try-textbtn" type="button" onClick={changeBusiness}>This isn&apos;t my business</button>
+      </p>
 
       <div className="try-grid two try-section">
         <section className="try-card try-call">

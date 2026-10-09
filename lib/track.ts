@@ -2,6 +2,8 @@
 // /api/events and land in the `events` table; forwarding to PostHog (POSTHOG_KEY) is not
 // wired yet. Never put personal data (email, phone, names) in props.
 
+import { randomUuid } from "@/lib/clientId";
+
 export type TrackProps = Record<string, string | number | boolean | null>;
 
 const ANON_KEY = "dcnt_anon";
@@ -10,7 +12,7 @@ function anonymousId(): string {
   try {
     const existing = window.localStorage.getItem(ANON_KEY);
     if (existing) return existing;
-    const created = crypto.randomUUID();
+    const created = randomUuid();
     window.localStorage.setItem(ANON_KEY, created);
     return created;
   } catch {

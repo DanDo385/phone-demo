@@ -34,6 +34,18 @@ export const foundingSmsConsent = consent(
 );
 
 // Shown under the analyzer (/try and the homepage) before the email field is submitted.
+export const consultEmailConsent = consent(
+  "email",
+  "consult-email",
+  `By sending this form you agree that ${brand.company.name} may email you about a proposal for your business. No newsletter unless you ask for one.`,
+);
+
+export const upgradeEmailConsent = consent(
+  "email",
+  "upgrade-email",
+  `We email this website assessment to this address. ${brand.company.name} will not add you to a newsletter.`,
+);
+
 export const analyzerEmailConsent = consent(
   "email",
   "analyzer-email",

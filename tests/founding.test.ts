@@ -93,7 +93,7 @@ describe("founding form", () => {
     expect(parseFounding(body({ emailConsentVersion: "founding-email-old" }), meta)).toHaveProperty("error");
     expect(parseFounding(body({ smsConsentVersion: "founding-sms-old" }), meta)).toHaveProperty("error");
     expect(parseFounding(body({ mobile: "", smsConsent: true }), meta)).toHaveProperty("error");
-    expect(parseFounding(body({ trade: "roofing" }), meta)).toHaveProperty("error");
+    expect(parseFounding(body({ trade: "not-a-trade" }), meta)).toHaveProperty("error");
     expect(parseFounding(body({ email: "nope" }), meta)).toHaveProperty("error");
     expect(parseFounding(body({ today: " " }), meta)).toHaveProperty("error");
     expect(parseFounding(body({ idempotencyKey: "short" }), meta)).toHaveProperty("error");

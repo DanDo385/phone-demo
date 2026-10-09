@@ -4,7 +4,7 @@
 import { chromium } from "playwright";
 
 const base = process.env.APP_BASE_URL || "http://localhost:3000";
-const routes = ["/", "/scribe", "/squire", "/pricing", "/ownership", "/faq", "/research", "/founding", "/book", "/legal/privacy", "/legal/terms", "/try"];
+const routes = ["/", "/scribe", "/squire", "/presence", "/examples", "/pricing", "/ownership", "/faq", "/research", "/founding", "/book", "/legal/privacy", "/legal/terms", "/try"];
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await browser.newPage({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });

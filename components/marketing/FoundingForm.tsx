@@ -5,13 +5,10 @@ import { foundingEmailConsent, foundingSmsConsent } from "@/content/consent";
 import { foundingPage } from "@/content/marketing/founding";
 import { TRADES } from "@/content/marketing/trades";
 import { useTurnstile } from "@/components/Turnstile";
+import { randomKey } from "@/lib/clientId";
 import { track } from "@/lib/track";
 
 const copy = foundingPage.form;
-
-function newKey(): string {
-  return crypto.randomUUID().replace(/-/g, "");
-}
 
 export function FoundingForm() {
   const [fields, setFields] = useState({ businessName: "", ownerName: "", email: "", mobile: "", trade: "", today: "" });
@@ -22,7 +19,7 @@ export function FoundingForm() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   // One key per filled-in form, so a retry after a network error cannot create a second request.
-  const [idempotencyKey] = useState(newKey);
+  const [idempotencyKey] = useState(randomKey);
   const turnstile = useTurnstile(started);
 
   const set = (name: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>

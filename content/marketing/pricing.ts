@@ -1,24 +1,22 @@
 import { brand, foundingOffer } from "@/lib/brand";
 
 export const pricingPage = {
-  meta: { title: "Pricing", description: `${brand.company.name} plans and founding-access terms.` },
+  meta: { title: "Pricing", description: `Services from ${brand.company.name}. Commercial terms are in a written proposal.` },
   headline: "Pricing",
-  lede: "Month-to-month. No per-call surprises hidden in the fine print.",
+  lede: "Request a tailored proposal. No public price is listed until the commercial terms are set.",
   founding: {
     heading: foundingOffer.headline,
-    slots: `${foundingOffer.slotsRemaining} of ${foundingOffer.totalSlots} founding spots open`,
+    slots: `${foundingOffer.slotsRemaining} of ${foundingOffer.totalSlots} founding conversations open`,
     terms: foundingOffer.terms,
   },
-  fairUse:
-    "Usage is metered per business. The included allowance is published after the first pilot month.",
-  // Keep this list current: it must match docs/CAPABILITIES.md and the feature flags.
+  fairUse: "Usage is metered per business and written into the proposal. This page does not imply an unlimited plan.",
   notIncludedYet: {
-    heading: "Not included yet",
+    heading: "Not connected for live use yet",
     items: [
-      "Taking over a live call from the assistant partway through",
-      "Text-message intake (waiting on carrier registration)",
-      "Languages other than English and Spanish",
-      "Dispatching emergencies. The assistant sends callers to 911 or the gas utility instead.",
+      "WhatsApp, Messenger, Instagram, and TikTok messages, until each platform approves the app",
+      "TikTok content publishing, which is a separate approval from TikTok messaging",
+      "Automatic listing edits. A public profile link starts an assessment. Changes wait for an owner connection.",
+      "Languages beyond the configured English and Spanish paths",
     ],
   },
   ownershipHeading: "What you own",

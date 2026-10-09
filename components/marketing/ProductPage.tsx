@@ -38,7 +38,7 @@ export function ProductPage({ product, id }: { product: Product; id: string }) {
         </div>
       </div>
       <div className="m-cta-row">
-        <TrackedLink className="m-btn" href={cta.report.href} event="cta_click" props={{ cta: `report_${id}` }}>{cta.report.label}</TrackedLink>
+        <TrackedLink className="m-btn" href={cta.upgrade.href} event="cta_click" props={{ cta: `upgrade_${id}` }}>{cta.upgrade.label}</TrackedLink>
         <TrackedLink className="m-btn m-btn-secondary" href={cta.walkthrough.href} event="cta_click" props={{ cta: `walkthrough_${id}` }}>{cta.walkthrough.label}</TrackedLink>
       </div>
     </div>

@@ -6,6 +6,7 @@ export type SiteScrape = { ok: boolean; pages: SitePage[]; error?: string };
 export type PlaceProfile = {
   found: boolean;
   query: string;
+  placeId?: string;
   name?: string;
   address?: string;
   phone?: string;
@@ -86,86 +87,22 @@ export async function scrapeWebsite(website: string): Promise<SiteScrape> {
   }
 }
 
-const PLACE_FIELDS = [
-  "places.id",
-  "places.displayName",
-  "places.formattedAddress",
-  "places.nationalPhoneNumber",
-  "places.websiteUri",
-  "places.googleMapsUri",
-  "places.rating",
-  "places.userRatingCount",
-  "places.primaryTypeDisplayName",
-  "places.types",
-  "places.regularOpeningHours",
-  "places.businessStatus",
-  "places.editorialSummary",
-  "places.photos",
-  "places.reviews",
-].join(",");
-
-// A GBP link rarely carries a usable place id, so resolve it to a text query:
-// a /maps/place/<name> path segment, else the raw text, else the website's hostname.
+// A profile link becomes a place id, a CID, or a text query. Short links are followed only
+// for an exact short-link hostname, through safeFetch. Place content is not stored here.
 export async function placeQuery(gbpInput: string, website: string): Promise<string> {
-  const raw = gbpInput.trim();
-  if (raw && /^https?:\/\//i.test(raw)) {
-    let url = raw;
-    if (/goo\.gl|g\.page|share\.google/i.test(raw)) {
-      const resolved = await fetch(raw, { redirect: "follow", signal: AbortSignal.timeout(10000) }).catch(() => null);
-      if (resolved) url = resolved.url;
-    }
-    const match = decodeURIComponent(url).match(/\/maps\/place\/([^/@]+)/);
-    if (match) return match[1].replace(/\+/g, " ");
-    const q = new URL(url).searchParams.get("q");
-    if (q) return q;
-  } else if (raw) {
-    return raw;
-  }
-  return website ? new URL(website).hostname.replace(/^www\./, "") : "";
+  const { resolvePlaceTarget } = await import("./mapsLink");
+  const target = await resolvePlaceTarget(gbpInput);
+  if (target.text) return target.text;
+  if (target.placeId) return target.placeId;
+  if (target.cid) return target.cid;
+  if (!gbpInput.trim()) return website ? new URL(website).hostname.replace(/^www\./, "") : "";
+  return "";
 }
 
-export async function lookupPlace(gbpInput: string, website: string): Promise<PlaceProfile> {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
-  const query = await placeQuery(gbpInput, website).catch(() => gbpInput);
-  if (!key) return { found: false, query, error: "GOOGLE_MAPS_API_KEY is not set" };
-  if (!query) return { found: false, query, error: "No business name or profile link" };
-  try {
-    const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: { "X-Goog-Api-Key": key, "X-Goog-FieldMask": PLACE_FIELDS, "Content-Type": "application/json" },
-      body: JSON.stringify({ textQuery: query, pageSize: 3 }),
-      signal: AbortSignal.timeout(15000),
-    });
-    const body = (await response.json()) as { places?: Array<Record<string, any>>; error?: { message?: string } };
-    if (!response.ok) return { found: false, query, error: body.error?.message || `Places returned ${response.status}` };
-    const host = website ? new URL(website).hostname.replace(/^www\./, "") : "";
-    const places = body.places ?? [];
-    // Prefer the result whose website matches the one the prospect entered.
-    const place = places.find((p) => host && String(p.websiteUri || "").includes(host)) ?? places[0];
-    if (!place) return { found: false, query };
-    return {
-      found: true,
-      query,
-      name: place.displayName?.text,
-      address: place.formattedAddress,
-      phone: place.nationalPhoneNumber,
-      website: place.websiteUri,
-      mapsUrl: place.googleMapsUri,
-      rating: place.rating,
-      reviewCount: place.userRatingCount,
-      category: place.primaryTypeDisplayName?.text,
-      types: place.types,
-      hours: place.regularOpeningHours?.weekdayDescriptions,
-      businessStatus: place.businessStatus,
-      summary: place.editorialSummary?.text,
-      photoCount: Array.isArray(place.photos) ? place.photos.length : 0,
-      reviews: (place.reviews ?? []).slice(0, 5).map((r: Record<string, any>) => ({
-        rating: r.rating,
-        text: String(r.text?.text ?? "").slice(0, 400),
-        when: r.relativePublishTimeDescription ?? "",
-      })),
-    };
-  } catch (error) {
-    return { found: false, query, error: error instanceof Error ? error.message : "Places lookup failed" };
-  }
+export async function lookupPlace(gbpInput: string, website: string, placeId?: string): Promise<PlaceProfile> {
+  const { fetchPlaceById, matchBusiness } = await import("./places");
+  if (placeId) return fetchPlaceById(placeId, gbpInput || placeId);
+  const match = await matchBusiness({ gbp: gbpInput, website });
+  if ("error" in match) return { found: false, query: gbpInput || website, placeId, error: match.error };
+  return match.profile;
 }

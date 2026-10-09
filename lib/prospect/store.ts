@@ -5,7 +5,8 @@ import type { Analysis } from "./schema";
 import type { PlaceProfile, SiteScrape } from "./sources";
 
 // "intake" rows come from the founding form and are never analyzed.
-export type ProspectStatus = "analyzing" | "ready" | "failed" | "intake";
+// "matched" is waiting on the confirm step and is not a pipeline stage.
+export type ProspectStatus = "analyzing" | "ready" | "failed" | "intake" | "matched";
 
 export type ProspectRow = {
   id: string;
@@ -20,6 +21,11 @@ export type ProspectRow = {
   analysis_json: string | null;
   error: string | null;
   report_email_status: string | null;
+  place_id: string | null;
+  place_confirmed: number;
+  trade: string | null;
+  service_area: string | null;
+  source: string;
   created_at: string;
   updated_at: string;
 };
@@ -41,22 +47,68 @@ export type CallRow = {
 export type LineRow = { id: number; call_id: string; seq: number; speaker: "agent" | "caller"; text: string; at_secs: number | null; created_at: string };
 export type Line = { speaker: "agent" | "caller"; text: string; atSecs?: number };
 
-export function createProspect(input: { website: string; gbpInput: string; email: string; phone: string; ip: string }): string {
+export function createProspect(input: {
+  website: string;
+  gbpInput: string;
+  email: string;
+  phone: string;
+  ip: string;
+  placeId: string;
+  trade: string;
+  serviceArea: string;
+  idempotencyKey: string;
+}): string {
+  const existing = get<{ id: string }>("SELECT id FROM prospects WHERE idempotency_key = ?", input.idempotencyKey);
+  if (existing) return existing.id;
   const pid = id("pro");
   const at = nowIso();
   run(
-    `INSERT INTO prospects(id, status, stage, website, gbp_input, email, phone_e164, client_ip, created_at, updated_at)
-     VALUES(?, 'analyzing', 'queued', ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO prospects(id, status, stage, website, gbp_input, email, phone_e164, client_ip, place_id, place_confirmed, trade, service_area, source, idempotency_key, created_at, updated_at)
+     VALUES(?, 'analyzing', 'queued', ?, ?, ?, ?, ?, ?, 1, ?, ?, 'try', ?, ?, ?)`,
     pid,
     input.website,
     input.gbpInput || null,
     input.email,
     input.phone || null,
     input.ip,
+    input.placeId,
+    input.trade || null,
+    input.serviceArea || null,
+    input.idempotencyKey,
     at,
     at,
   );
   return pid;
+}
+
+export function prospectByIdempotency(key: string): ProspectRow | undefined {
+  return get<ProspectRow>("SELECT * FROM prospects WHERE idempotency_key = ?", key);
+}
+
+// A confirmed place can be replaced. Analysis restarts only after the new confirm.
+export function confirmProspectPlace(pid: string, input: { placeId: string; website: string; gbpInput: string; trade: string; serviceArea: string }): void {
+  const at = nowIso();
+  run(
+    `UPDATE prospects
+     SET place_id = ?, place_confirmed = 1, status = 'analyzing', stage = 'queued',
+         website = ?, gbp_input = ?, trade = ?, service_area = ?,
+         analysis_json = NULL, sources_json = NULL, error = NULL, updated_at = ?
+     WHERE id = ? AND source = 'try'`,
+    input.placeId,
+    input.website,
+    input.gbpInput || null,
+    input.trade || null,
+    input.serviceArea || null,
+    at,
+    pid,
+  );
+}
+
+export function reopenProspectConfirm(pid: string): boolean {
+  const row = prospectById(pid);
+  if (!row || row.source !== "try") return false;
+  run("UPDATE prospects SET place_confirmed = 0, status = 'matched', stage = 'confirm', updated_at = ? WHERE id = ?", nowIso(), pid);
+  return true;
 }
 
 export function prospectById(pid: string): ProspectRow | undefined {
@@ -67,8 +119,13 @@ export function setStage(pid: string, stage: string): void {
   run("UPDATE prospects SET stage = ?, updated_at = ? WHERE id = ?", stage, nowIso(), pid);
 }
 
+// Places content other than the place id is not stored. See docs/places-terms.md.
 export function saveSources(pid: string, site: SiteScrape, place: PlaceProfile): void {
-  run("UPDATE prospects SET sources_json = ?, updated_at = ? WHERE id = ?", JSON.stringify({ site, place }), nowIso(), pid);
+  const stored = {
+    site,
+    place: { found: place.found, query: place.query, placeId: place.placeId, error: place.error },
+  };
+  run("UPDATE prospects SET sources_json = ?, updated_at = ? WHERE id = ?", JSON.stringify(stored), nowIso(), pid);
 }
 
 export function saveAnalysis(pid: string, analysis: Analysis): void {
@@ -91,8 +148,29 @@ export function sourcesOf(row: ProspectRow | undefined): { site: SiteScrape; pla
   return row?.sources_json ? JSON.parse(row.sources_json) : null;
 }
 
-export function recentAnalysesFromIp(ip: string, sinceIso: string): number {
+export function recentAnalysesFromIp(ip: string, sinceIso: string, exceptId?: string): number {
+  if (exceptId) {
+    return get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE source = 'try' AND client_ip = ? AND created_at >= ? AND id != ?", ip, sinceIso, exceptId)?.n ?? 0;
+  }
   return get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE source = 'try' AND client_ip = ? AND created_at >= ?", ip, sinceIso)?.n ?? 0;
+}
+
+export function recentProspectsForPlace(placeId: string, sinceIso: string, exceptId?: string): number {
+  if (exceptId) {
+    return get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE source = 'try' AND place_id = ? AND created_at >= ? AND id != ?", placeId, sinceIso, exceptId)?.n ?? 0;
+  }
+  return get<{ n: number }>("SELECT COUNT(*) AS n FROM prospects WHERE source = 'try' AND place_id = ? AND created_at >= ?", placeId, sinceIso)?.n ?? 0;
+}
+
+export function recordPlaceLookup(ip: string, placeId: string | null, kind: "lookup" | "autocomplete"): void {
+  run("INSERT INTO place_lookups(client_ip, place_id, kind, created_at) VALUES (?, ?, ?, ?)", ip, placeId, kind, nowIso());
+}
+
+export function recentPlaceLookups(filter: { ip?: string; placeId?: string; kind: "lookup" | "autocomplete" }, sinceIso: string): number {
+  if (filter.placeId) {
+    return get<{ n: number }>("SELECT COUNT(*) AS n FROM place_lookups WHERE kind = ? AND place_id = ? AND created_at >= ?", filter.kind, filter.placeId, sinceIso)?.n ?? 0;
+  }
+  return get<{ n: number }>("SELECT COUNT(*) AS n FROM place_lookups WHERE kind = ? AND client_ip = ? AND created_at >= ?", filter.kind, filter.ip || "", sinceIso)?.n ?? 0;
 }
 
 // Caller ID first; otherwise the most recent ready prospect from the last 15 minutes.

@@ -13,7 +13,7 @@ export default function BookPage() {
       <p className="m-lede">{bookPage.body}</p>
       <div className="m-cta-row">
         <Link className="m-btn" href={cta.founding.href}>{cta.founding.label}</Link>
-        <Link className="m-btn m-btn-secondary" href={cta.report.href}>{cta.report.label}</Link>
+        <Link className="m-btn m-btn-secondary" href={cta.upgrade.href}>{cta.upgrade.label}</Link>
       </div>
     </div>
   );

@@ -46,7 +46,7 @@ describe("route groups", () => {
   });
 
   it("serves the public site from (marketing)", () => {
-    const urls = ["/", "/scribe", "/squire", "/pricing", "/ownership", "/faq", "/research", "/founding", "/book", "/legal/privacy", "/legal/terms"];
+    const urls = ["/", "/scribe", "/squire", "/presence", "/examples", "/upgrade/upg_1", "/pricing", "/ownership", "/faq", "/research", "/founding", "/book", "/legal/privacy", "/legal/terms"];
     for (const url of urls) {
       const file = resolve(url, table);
       expect(file, url).toBeDefined();

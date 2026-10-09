@@ -1,33 +1,33 @@
-import { brand, foundingOffer } from "@/lib/brand";
+import { brand, callsToAction, foundingOffer } from "@/lib/brand";
 
 // Navigation, footer, and the calls to action shared across the public site.
 
 export const nav = [
+  { href: "/presence", label: "Website" },
   { href: "/scribe", label: brand.products.scribe },
   { href: "/squire", label: brand.products.squire },
+  { href: "/examples", label: "Examples" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/ownership", label: "Ownership" },
-  { href: "/faq", label: "FAQ" },
 ] as const;
 
 export const cta = {
-  report: { label: "Get my free local-presence report", href: "/#report" },
-  hearYourBusiness: { label: "Hear your own business answer the phone", href: "/try?intent=call" },
-  // The fictional Palmetto Coast phone experience. It sits behind the demo owner login today.
-  demoBusiness: { label: "Try the demo business", href: "/call" },
-  walkthrough: { label: "Book a 15-minute walkthrough", href: "/book" },
+  upgrade: { label: callsToAction.primary, href: "/#upgrade" },
+  receptionist: { label: callsToAction.secondary, href: "/examples#receptionist" },
+  proposal: { label: "Request a tailored proposal", href: "/#consult" },
+  walkthrough: { label: "Book a consultation", href: "/book" },
   founding: { label: "Request founding access", href: "/founding" },
+  preview: callsToAction.preview,
 } as const;
 
 export const footer = {
-  tagline: "Fewer missed jobs, faster follow-up, cleaner operations, a better local presence.",
+  tagline: "Better visibility, faster response, and more booked business.",
   founding: foundingOffer.headline,
   links: [
+    { href: "/ownership", label: "Ownership" },
+    { href: "/faq", label: "Questions" },
     { href: "/founding", label: "Founding access" },
-    { href: "/research", label: "Research" },
     { href: "/legal/privacy", label: "Privacy" },
     { href: "/legal/terms", label: "Terms" },
-    { href: "/demo", label: "Demo business" },
   ],
-  demoNote: "Palmetto Coast Home Services is a fictional business we use for demos. Its customers, prices, and reviews are made up.",
+  demoNote: "Demonstrations on this site use fictional businesses. They are not clients, and their projects, prices, and outcomes are illustrative.",
 } as const;

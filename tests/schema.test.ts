@@ -39,7 +39,7 @@ describe("launch schema", () => {
 
     resetDbForTests(file);
     const cols = all<{ name: string }>("PRAGMA table_info(prospects)").map((c) => c.name);
-    for (const col of ["owner_name", "role", "trade", "utm_json", "lead_status", "qualification_json", "place_id", "place_confirmed"]) {
+    for (const col of ["owner_name", "role", "trade", "service_area", "utm_json", "lead_status", "qualification_json", "place_id", "place_confirmed"]) {
       expect(cols).toContain(col);
     }
     expect(get("SELECT status, lead_status, place_confirmed FROM prospects WHERE id = 'p_old'")).toEqual({
@@ -94,13 +94,14 @@ describe("qualification", () => {
 
 describe("brand", () => {
   it("holds the launch offer", () => {
-    expect(formatPrice(plan("scribe"))).toBe("$297/month");
-    expect(formatPrice(plan("scribeSquire"))).toBe("$497/month");
-    expect(formatPrice(plan("custom"))).toBe("Quoted");
+    expect(formatPrice(plan("scribe"))).toBe("Request a tailored proposal");
+    expect(formatPrice(plan("presence"))).toBe("Request a tailored proposal");
+    expect(plan("combined").monthlyUsd).toBeNull();
     expect(foundingOffer.terms[0]).toBe("Open to the first five qualified businesses");
+    expect(foundingOffer.terms.join(" ")).not.toMatch(/\$\d+/);
     expect(foundingOffer.slotsRemaining).toBeLessThanOrEqual(foundingOffer.totalSlots);
     expect(ownershipPromise).toBe(
-      `You own the number, domain, data, listing, calendar, and merchant account. ${brand.company.shortName} operates them with revocable access.`,
+      `You own the number, domain, data, listing, calendar, and merchant account. The domain stays in your registrar account. ${brand.company.shortName} operates them with revocable access.`,
     );
   });
 });

@@ -17,28 +17,42 @@ import {
   setStage,
   staleLiveCalls,
 } from "./store";
-import { lookupPlace, scrapeWebsite } from "./sources";
+import { analysisAllowed } from "./confirm";
+import { fetchPlaceById } from "./places";
+import { scrapeWebsite } from "./sources";
 import { finalTranscript, isSelfHosted, saveRecording } from "./conversation";
 import { prewarmGreeting } from "./voiceEngine";
 
 const SUMMARY_MODEL = process.env.PROSPECT_SUMMARY_MODEL || "claude-opus-5";
 
 // Runs in the background after the intake form posts. Stages drive the progress UI.
+function stillConfirmed(prospectId: string): boolean {
+  const row = prospectById(prospectId);
+  return Boolean(row && row.status === "analyzing" && analysisAllowed(row));
+}
+
 export async function runAnalysis(prospectId: string): Promise<void> {
   const prospect = prospectById(prospectId);
-  if (!prospect) return;
+  if (!prospect || !analysisAllowed(prospect)) return;
   try {
     setStage(prospectId, "reading_website");
-    const sitePromise = scrapeWebsite(prospect.website);
+    const sitePromise = prospect.website
+      ? scrapeWebsite(prospect.website)
+      : Promise.resolve({ ok: false, pages: [], error: "No website was entered" });
     setStage(prospectId, "reading_profile");
-    const [site, place] = await Promise.all([sitePromise, lookupPlace(prospect.gbp_input || "", prospect.website)]);
+    const [site, place] = await Promise.all([
+      sitePromise,
+      fetchPlaceById(prospect.place_id || "", prospect.gbp_input || prospect.place_id || ""),
+    ]);
+    if (!stillConfirmed(prospectId)) return;
     saveSources(prospectId, site, place);
     if (!site.ok && !place.found) {
-      failProspect(prospectId, `We could not read the website or find a Google Business Profile. ${site.error ?? ""}`.trim());
+      if (stillConfirmed(prospectId)) failProspect(prospectId, `We could not read the website or find a Google Business Profile. ${site.error ?? ""}`.trim());
       return;
     }
     setStage(prospectId, "writing_script");
     const analysis = await analyzeProspect({ website: prospect.website, site, place });
+    if (!stillConfirmed(prospectId)) return;
     saveAnalysis(prospectId, analysis);
     void prewarmGreeting(analysis.voice.first_message);
     if (agentMailReady()) {
@@ -49,7 +63,7 @@ export async function runAnalysis(prospectId: string): Promise<void> {
     }
   } catch (error) {
     console.error("prospect analysis failed", error);
-    failProspect(prospectId, error instanceof Error ? error.message : "Analysis failed");
+    if (stillConfirmed(prospectId)) failProspect(prospectId, error instanceof Error ? error.message : "Analysis failed");
   }
 }
 

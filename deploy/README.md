@@ -183,7 +183,7 @@ Test the restore on a scratch host before launch. A backup that has never been r
 
 ## Security notes
 
-- **Fix before going live:** `lib/prospect/sources.ts` `placeQuery` fetches a user-supplied Google Maps short link with `redirect: "follow"` after an unanchored hostname regex (`/goo\.gl|g\.page|share\.google/`), so a URL like `http://169.254.169.254/?goo.gl` passes. On a VPS that is a blind SSRF into the host's network. Route it through `lib/safeFetch.ts` (required by CLAUDE.md, not written yet).
+- Maps short links are followed only when the hostname is exactly `maps.app.goo.gl`, `goo.gl`, `g.page`, or `share.google`, and only through `lib/safeFetch.ts` (private, loopback, link-local, CGNAT, and cloud-metadata addresses are refused, including on redirects).
 - Caddy strips a client-sent `CF-Connecting-IP`. `app/api/prospects/route.ts` reads that header before `X-Forwarded-For`, and with no CDN in front it would let a client choose its own rate-limit key. If Cloudflare is later put in front, restrict origin access to Cloudflare's ranges before removing that line.
 - Access logs redact token path segments (`/c/`, `/review/`, `/try/`, `/api/customer/`, `/api/review/`, `/api/prospects/`) and drop the `Cookie` and `Authorization` headers.
 - The app and voice units run as `docent` with `ProtectSystem=strict`. They can write only under `/var/lib/docent`.

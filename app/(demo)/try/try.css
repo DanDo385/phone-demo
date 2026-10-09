@@ -43,8 +43,20 @@
 .try-form { display: grid; gap: 14px; margin-top: 28px; max-width: 620px; }
 .try-field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
 .try-field .hint { font-weight: 400; color: var(--t-muted); }
-.try-field input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid #d0d5dd; border-radius: 10px; background: var(--t-card); color: var(--t-ink); }
-.try-field input:focus { outline: 2px solid var(--t-accent); outline-offset: 1px; border-color: transparent; }
+.try-field input, .try-field select { width: 100%; min-width: 0; font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid #d0d5dd; border-radius: 10px; background: var(--t-card); color: var(--t-ink); }
+.try-field input:focus, .try-field select:focus { outline: 2px solid var(--t-accent); outline-offset: 1px; border-color: transparent; }
+.try-combo { position: relative; }
+.try-suggestions, .try-alternates { list-style: none; padding: 4px; margin: 6px 0 0; }
+.try-suggestions { position: absolute; z-index: 5; left: 0; right: 0; background: var(--t-card); border: 1px solid var(--t-line); border-radius: 10px; box-shadow: var(--t-shadow); max-height: 240px; overflow: auto; }
+.try-suggestions button, .try-alternates button { width: 100%; text-align: left; background: none; border: 0; padding: 10px; font: inherit; cursor: pointer; border-radius: 8px; display: grid; gap: 2px; }
+.try-suggestions button span, .try-alternates button span, .try-match dd { color: var(--t-ink-2); overflow-wrap: anywhere; }
+.try-suggestions button:hover, .try-suggestions [aria-selected="true"] button, .try-alternates button:hover { background: var(--t-accent-soft); }
+.try-match { display: grid; gap: 8px; margin-top: 20px; max-width: 620px; }
+.try-match dl { margin: 0; }
+.try-match dt { font-size: 12px; font-weight: 600; color: var(--t-muted); margin-top: 8px; }
+.try-match dd { margin: 0; }
+.try-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.try-textbtn { background: none; border: 0; padding: 0; color: var(--t-accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
 .try-btn { appearance: none; border: 0; border-radius: 10px; padding: 12px 18px; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer; background: var(--t-accent); color: #fff; display: inline-flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none; }
 .try-btn:disabled { opacity: 0.6; cursor: default; }
 .try-btn.ghost { background: var(--t-card); color: var(--t-ink); border: 1px solid #d0d5dd; }

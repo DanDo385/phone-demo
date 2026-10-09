@@ -1,8 +1,8 @@
-// The single source for Docent Solutions' names, prices, offer terms, and look. Pages,
-// emails, and prompts read these values; nothing else may hardcode them. Palmetto Coast is
-// the fictional demo business and keeps its own copy in lib/business.ts.
+// The single source for names, prices, offer terms, and look. Pages, emails, and prompts
+// read these values; nothing else may hardcode them.
 //
-// Pricing and the founding offer are a launch hypothesis. Change them here and nowhere else.
+// Product labels can change here without a copy rewrite. monthlyUsd stays null until
+// commercial terms are provided. formatPrice then shows proposalLabel.
 
 export const brand = {
   company: {
@@ -12,6 +12,7 @@ export const brand = {
   products: {
     scribe: "Scribe",
     squire: "Squire",
+    presence: "Website and digital presence",
   },
   // Not yet confirmed as registered. Used for canonical URLs and deploy docs, never for
   // server-to-server calls (those use APP_BASE_URL).
@@ -37,12 +38,21 @@ export const brand = {
   },
 } as const;
 
-export type PlanKey = "scribe" | "scribeSquire" | "custom";
+export const proposalLabel = "Request a tailored proposal";
+
+export const callsToAction = {
+  primary: "See your business upgraded.",
+  secondary: "Try the receptionist.",
+  preview:
+    "Want this website live? We handle the build, hosting, and ongoing improvements. You keep ownership of your domain.",
+} as const;
+
+export type PlanKey = "presence" | "scribe" | "squire" | "combined";
 
 export type Plan = {
   key: PlanKey;
   name: string;
-  // Whole US dollars per month; null means quoted.
+  // Whole US dollars per month; null means the public site asks for a proposal.
   monthlyUsd: number | null;
   summary: string;
   includes: readonly string[];
@@ -50,39 +60,55 @@ export type Plan = {
 
 export const plans: readonly Plan[] = [
   {
+    key: "presence",
+    name: brand.products.presence,
+    monthlyUsd: null,
+    summary: "A managed website and digital presence, on its own or bundled with either product.",
+    includes: [
+      "Website build, hosting, backups, and ongoing improvements",
+      "The domain stays in the client's registrar account",
+      "Service pages, lead capture, and a customer sign-in",
+      "Profile improvements published only after the owner authorizes them",
+      "A documented handoff and export",
+    ],
+  },
+  {
     key: "scribe",
     name: brand.products.scribe,
-    monthlyUsd: 297,
-    summary: "Answers, books, and follows up so fewer jobs slip away.",
-    includes: [
-      "Voice and SMS/MMS intake",
-      "Booking and job records",
-      "Draft invoices and payment links",
-      "Review-request workflow",
-      "Website and Google profile improvement workflow",
-      "Owner portal and reports",
-    ],
-  },
-  {
-    key: "scribeSquire",
-    name: `${brand.products.scribe} + ${brand.products.squire}`,
-    monthlyUsd: 497,
-    summary: `Everything in ${brand.products.scribe}, plus a steady local presence you approve.`,
-    includes: [
-      `Everything in ${brand.products.scribe}`,
-      "Owned media library",
-      "Post, blog, and email drafts",
-      "Short-form video",
-      "Approval calendar",
-      "Channel publishing adapters",
-    ],
-  },
-  {
-    key: "custom",
-    name: "Custom",
     monthlyUsd: null,
-    summary: "For larger or unusual operations. Setup fee plus a higher retainer.",
-    includes: ["Scoped after a walkthrough", "Setup fee and retainer quoted in writing"],
+    summary: "Answers calls and messages, qualifies the inquiry, collects files, books the appointment, and hands the work to the business.",
+    includes: [
+      "Phone, website chat, text, and email on one record",
+      "Photos, plans, and other supported files",
+      "Residential and commercial qualification, including RFPs",
+      "Booking from connected availability",
+      "Account details only after a verified sign-in",
+      "A person takes over when the request is uncertain or sensitive",
+    ],
+  },
+  {
+    key: "squire",
+    name: brand.products.squire,
+    monthlyUsd: null,
+    summary: "Carries the inquiry through the estimate, the job, the invoice, a review invitation, and content the owner approves.",
+    includes: [
+      "Estimate, schedule, job notes, and progress files",
+      "Invoice and payment status from the system of record",
+      "A neutral review invitation after completion and confirmed payment",
+      "Drafts made from the job's own notes and approved files",
+      "Nothing is published until the owner approves it",
+    ],
+  },
+  {
+    key: "combined",
+    name: "Combined service",
+    monthlyUsd: null,
+    summary: "The website, the receptionist, and the workflow together, from the first question through payment and the next story.",
+    includes: [
+      `Everything in ${brand.products.presence}`,
+      `Everything in ${brand.products.scribe}`,
+      `Everything in ${brand.products.squire}`,
+    ],
   },
 ];
 
@@ -93,35 +119,27 @@ export function plan(key: PlanKey): Plan {
 }
 
 export function formatPrice(p: Plan): string {
-  return p.monthlyUsd === null ? "Quoted" : `$${p.monthlyUsd}/month`;
+  return p.monthlyUsd === null ? proposalLabel : `$${p.monthlyUsd}/month`;
 }
 
 const FOUNDING_SLOTS = 5;
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
 export const foundingOffer = {
-  // Shown as "Founding access now open". No countdowns, no urgency copy.
   headline: "Founding access now open",
   totalSlots: FOUNDING_SLOTS,
-  // Update by hand as founding businesses sign. It must never overstate what is left.
   slotsRemaining: FOUNDING_SLOTS,
-  plan: "scribe" as PlanKey,
-  setupFeeWaived: true,
-  squireBetaIncluded: true,
+  plan: "combined" as PlanKey,
   term: "month-to-month",
   terms: [
     `Open to the first ${NUMBER_WORDS[FOUNDING_SLOTS] ?? FOUNDING_SLOTS} qualified businesses`,
-    `${brand.products.scribe} at ${formatPrice(plan("scribe"))}`,
-    "Standard setup fee waived",
-    `${brand.products.squire} beta included during the pilot`,
-    "Month-to-month; no long-term contract",
+    "Commercial terms are written in a proposal. No public price is listed until those terms are set.",
+    "Month-to-month once a proposal is accepted",
   ],
 } as const;
 
-export const ownershipPromise = `You own the number, domain, data, listing, calendar, and merchant account. ${brand.company.shortName} operates them with revocable access.`;
+export const ownershipPromise = `You own the number, domain, data, listing, calendar, and merchant account. The domain stays in your registrar account. ${brand.company.shortName} operates them with revocable access.`;
 
-// CSS custom properties for a layout's root element, so stylesheets use var(--brand-*)
-// instead of hex values.
 export function brandCssVariables(): Record<string, string> {
   const c = brand.colors;
   return {

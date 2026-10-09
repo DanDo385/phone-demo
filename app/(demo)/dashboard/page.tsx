@@ -25,7 +25,7 @@ export default async function DashboardHome() {
           <div className="kicker">Fictional demo</div>
           <div className="wordmark" style={{ fontSize: 32 }}>Owner dashboard</div>
         </div>
-        <span><Link href="/dashboard/crm">Customers</Link> · <Link href="/dashboard/books">Books</Link> · <Link href="/dashboard/prospects">Companies to call</Link> · <Link href="/call">Open phone experience</Link></span>
+        <span><Link href="/dashboard/workflow">Workflow</Link> · <Link href="/examples">Public examples</Link> · <Link href="/dashboard/crm">Customers</Link> · <Link href="/dashboard/books">Books</Link> · <Link href="/dashboard/prospects">Companies to call</Link></span>
       </header>
       <p className="muted">{demoClockLabel(getDemoOffset())}</p>
       <section className="panel" style={{ marginTop: 16 }}>
