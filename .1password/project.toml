@@ -9,7 +9,7 @@ run = "npm run dev"
 
 google_account = "dan@magro.dev"
 google_cloud_project_number = "675437678581"
-providers = ["google", "twilio", "elevenlabs", "agentmail", "typesafe", "anthropic", "firecrawl"]
+providers = ["google", "twilio", "elevenlabs", "agentmail", "typesafe", "anthropic", "firecrawl", "pexels", "unsplash", "cloudflare", "posthog", "s3"]
 
 # Runtime variable -> source. op:// refs point at canonical provider items and double as the
 # rotation map; plain strings are non-secret literals. Sync with:
@@ -52,3 +52,26 @@ FIRECRAWL_API_KEY = "op://Dev/5klovwgfhj3me2g5tup4wt2paa/api/api_key"           
 GOOGLE_MAPS_API_KEY = "op://Dev/wjmucxeh3nbzdq7uncigpzdfnu/api_key_maps/api_key"                           # Google | djm385@gmail.com (Places API New)
 LLM_RELAY_SECRET = "op://Dev/mpajocrxmn7asznj46gzac4piu/llm_relay_secret"                             # Phone Demo (ElevenLabs custom LLM -> /api/llm)
 ELEVENLABS_PROSPECT_AGENT_ID = "op://Dev/lepwetmvclv3h6qamwbxdzwm6u/prospect_agent_id"                  # ElevenLabs (prospect demo agent, custom LLM)
+
+# ---- Public site ----
+# TODO marks a canonical item or field that does not exist yet: create it in the Dev vault,
+# swap the name-based ref for the item-id ref like the entries above, then add the variable to
+# phone-demo-dev. PageSpeed Insights reuses GOOGLE_MAPS_API_KEY; it has no key of its own.
+FEATURE_SMS = "false"
+FEATURE_SHOW_SCORE = "false"
+DEMO_KILL_SWITCH = "false"
+POSTHOG_HOST = "https://us.i.posthog.com"
+LITESTREAM_REGION = "us-east-1"                                                                           # TODO: confirm once the bucket provider is chosen
+LITESTREAM_PATH = "prod"
+WALKTHROUGH_CALENDAR_ID = "op://Dev/jkdm7r24acc7lhcxic2wv3s6he/oauth_phone_demo/walkthrough_calendar_id" # Google | dan@magro.dev. TODO: field does not exist yet
+CALLER_HASH_SALT = "op://Dev/mpajocrxmn7asznj46gzac4piu/caller_hash_salt"                                 # Phone Demo. TODO: field does not exist yet
+NOTIFY_EMAIL = "op://Dev/mpajocrxmn7asznj46gzac4piu/notify_email"                                         # Phone Demo. TODO: field does not exist yet
+PEXELS_API_KEY = "op://Dev/Pexels/credential"                                                            # TODO: item does not exist yet
+UNSPLASH_ACCESS_KEY = "op://Dev/Unsplash/access_key"                                                     # TODO: item does not exist yet
+TURNSTILE_SITE_KEY = "op://Dev/Cloudflare Turnstile/site_key"                                            # TODO: item does not exist yet
+TURNSTILE_SECRET_KEY = "op://Dev/Cloudflare Turnstile/secret_key"                                        # TODO: item does not exist yet
+POSTHOG_KEY = "op://Dev/PostHog/project_api_key"                                                         # TODO: item does not exist yet
+LITESTREAM_ACCESS_KEY_ID = "op://Dev/Backups S3/access_key_id"                                    # TODO: item does not exist yet
+LITESTREAM_SECRET_ACCESS_KEY = "op://Dev/Backups S3/secret_access_key"                            # TODO: item does not exist yet
+LITESTREAM_BUCKET = "op://Dev/Backups S3/bucket"                                                  # TODO: item does not exist yet
+LITESTREAM_ENDPOINT = "op://Dev/Backups S3/endpoint"                                              # TODO: item does not exist yet
